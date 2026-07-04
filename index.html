@@ -951,30 +951,101 @@
         { model_code: 'T00-5DR', description: 'T00 5-door' }
       ],
       processes: [
+        { process_id: 'P01', seq: 1, name: 'Sub Bracket Assy' },
         { process_id: 'P02', seq: 2, name: 'Base Comp Tighten' },
         { process_id: 'P03', seq: 3, name: 'Camera Installation' },
+        { process_id: 'P04', seq: 4, name: 'Seal Comp Cutline Attachment' },
         { process_id: 'P05', seq: 5, name: 'Base Tighten' },
+        { process_id: 'P06', seq: 6, name: 'Seat Base Attachment' },
         { process_id: 'P07', seq: 7, name: 'Bracket Tighten' },
-        { process_id: 'P08', seq: 8, name: 'ACT Tighten' }
+        { process_id: 'P08', seq: 8, name: 'ACT Tighten' },
+        { process_id: 'P09', seq: 9, name: 'Housing Lower Tighten' },
+        { process_id: 'P10', seq: 10, name: 'Mirror Attachment' },
+        { process_id: 'P11', seq: 11, name: 'Mirror Performance' },
+        { process_id: 'P12', seq: 12, name: 'Camera Performance' },
+        { process_id: 'P13', seq: 13, name: 'Non-calibration Tools' }
       ],
       controlItems: [
-        // P02
-        { ci_id: 'CI-0002', process_id: 'P02', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', model_dependent: false },
-        { ci_id: 'CI-0004', process_id: 'P02', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '', unit: 'Nm', model_dependent: true },
-        { ci_id: 'CI-0005', process_id: 'P02', name: 'Bold Stud Type M6', type: 'TEXT', standard: '', model_dependent: true },
-        { ci_id: 'CI-0006', process_id: 'P02', name: 'Program Selection', type: 'TEXT', standard: '', model_dependent: true },
-        { ci_id: 'CI-0008', process_id: 'P02', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', model_dependent: false },
-        // P05
-        { ci_id: 'CI-0017', process_id: 'P05', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '', unit: 'Nm', model_dependent: true },
-        { ci_id: 'CI-0018', process_id: 'P05', name: 'Screw Type', type: 'TEXT', standard: '', model_dependent: true },
-        { ci_id: 'CI-0021', process_id: 'P05', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', model_dependent: false },
-        // P07
-        { ci_id: 'CI-0024', process_id: 'P07', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', model_dependent: false },
-        { ci_id: 'CI-0026', process_id: 'P07', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '', unit: 'Nm', model_dependent: true },
-        { ci_id: 'CI-0027', process_id: 'P07', name: 'Screw Type', type: 'TEXT', standard: '', model_dependent: true }
+        // P01,
+        { ci_id: 'CI-0001', process_id: 'P01', name: 'HLT Noise Inspection', type: 'TEXT', standard: 'Stamp Date', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        // P02,
+        { ci_id: 'CI-0002', process_id: 'P02', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0003', process_id: 'P02', name: 'Torque Driver Bit', type: 'OK_NG', standard: 'Not Worn or Torn', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0004', process_id: 'P02', name: 'Torque Driver Reading', type: 'NUMERIC', standard: 'See ModelSpecs', unit: 'Nm', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0005', process_id: 'P02', name: 'Bold Stud Type M6', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0006', process_id: 'P02', name: 'Program Selection', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0007', process_id: 'P02', name: 'Screw Box Location', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0008', process_id: 'P02', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        // P03,
+        { ci_id: 'CI-0009', process_id: 'P03', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0010', process_id: 'P03', name: 'Torque Driver Bit', type: 'OK_NG', standard: 'Not Worn or Torn', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0011', process_id: 'P03', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '1.6 ± 0.2 Nm', unit: 'Nm', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0012', process_id: 'P03', name: 'Screw Type', type: 'OK_NG', standard: 'Tapping Truss 4x14 (SAG-E0509-0002)', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0013', process_id: 'P03', name: 'Program Selection', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,T00-4DR,T00-5DR,3A0,3K6' },
+        { ci_id: 'CI-0014', process_id: 'P03', name: 'Screw Box Location', type: 'TEXT', standard: 'Slot 1', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0015', process_id: 'P03', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        // P04,
+        { ci_id: 'CI-0016', process_id: 'P04', name: 'Tools Insert Condition', type: 'OK_NG', standard: 'Tools Surface Free From Sharp Edges', unit: '', model_dependent: false, applicable_models: 'T00-4DR,T00-5DR' },
+        // P05,
+        { ci_id: 'CI-0017', process_id: 'P05', name: 'Torque Driver Reading', type: 'NUMERIC', standard: 'See ModelSpecs', unit: 'Nm', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0018', process_id: 'P05', name: 'Screw Type', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0019', process_id: 'P05', name: 'Program Selection', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0020', process_id: 'P05', name: 'Screw Box Location', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0021', process_id: 'P05', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        // P06,
+        { ci_id: 'CI-0022', process_id: 'P06', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0023', process_id: 'P06', name: 'Jig Hook Body Condition', type: 'OK_NG', standard: 'Free From Damage', unit: '', model_dependent: true, applicable_models: 'T20,3A0' },
+        // P07,
+        { ci_id: 'CI-0024', process_id: 'P07', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0025', process_id: 'P07', name: 'Torque Driver Bit', type: 'OK_NG', standard: 'Not Worn or Torn', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0026', process_id: 'P07', name: 'Torque Driver Reading', type: 'NUMERIC', standard: 'See ModelSpecs', unit: 'Nm', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0027', process_id: 'P07', name: 'Screw Type', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0028', process_id: 'P07', name: 'Program Selection', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR,3A0-HEV' },
+        { ci_id: 'CI-0029', process_id: 'P07', name: 'Screw Box Location', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0030', process_id: 'P07', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        // P08,
+        { ci_id: 'CI-0031', process_id: 'P08', name: 'HLT Noise Inspection', type: 'TEXT', standard: 'Stamp Date', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0032', process_id: 'P08', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0033', process_id: 'P08', name: 'Torque Driver Bit', type: 'OK_NG', standard: 'Not Worn or Torn', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0034', process_id: 'P08', name: 'Torque Driver Reading', type: 'NUMERIC', standard: 'See ModelSpecs', unit: 'Nm', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0035', process_id: 'P08', name: 'Screw Type', type: 'OK_NG', standard: 'Tapping Pan 4x14 (TDE-E0509-0000)', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0036', process_id: 'P08', name: 'Program Selection', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR,3A0-VHEV' },
+        { ci_id: 'CI-0037', process_id: 'P08', name: 'Screw Box Location', type: 'TEXT', standard: 'Slot 1', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0038', process_id: 'P08', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        // P09,
+        { ci_id: 'CI-0039', process_id: 'P09', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0040', process_id: 'P09', name: 'Torque Driver Bit', type: 'OK_NG', standard: 'Not Worn or Torn', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0041', process_id: 'P09', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '1.6 ± 0.2 Nm', unit: 'Nm', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0042', process_id: 'P09', name: 'Screw Type', type: 'OK_NG', standard: 'Tapping Truss 4x14 (SAG-E0509-0002)', unit: '', model_dependent: true, applicable_models: '3M0,3A0' },
+        // P10,
+        { ci_id: 'CI-0043', process_id: 'P10', name: 'Program Selection', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,3A0-VHEV' },
+        // P11,
+        { ci_id: 'CI-0044', process_id: 'P11', name: 'Program Selection', type: 'TEXT', standard: 'Refer Program List @ M/C', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0045', process_id: 'P11', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0046', process_id: 'P11', name: 'Reset Gauge', type: 'OK_NG', standard: 'Machine Adjustment', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0047', process_id: 'P11', name: 'Air Pressure Reading - Rear (No.1)', type: 'NUMERIC', standard: '0.30 ± 0.05 Mpa', unit: 'Mpa', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0048', process_id: 'P11', name: 'Air Pressure Reading - Front (No.2)', type: 'NUMERIC', standard: '0.30 ± 0.05 Mpa', unit: 'Mpa', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0049', process_id: 'P11', name: 'Air Pressure Reading - Main (No.3)', type: 'NUMERIC', standard: '0.55 ± 0.05 Mpa', unit: 'Mpa', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0050', process_id: 'P11', name: 'Air Pressure Reading - Clamp (No.4)', type: 'NUMERIC', standard: '0.30 ± 0.05 Mpa', unit: 'Mpa', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0051', process_id: 'P11', name: 'Tester Master Sample Check (OK)', type: 'DETECT', standard: 'Detect', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0052', process_id: 'P11', name: 'Tester Master Sample Check (NG)', type: 'DETECT', standard: 'Detect', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0053', process_id: 'P11', name: 'Punch Mark Availability', type: 'OK_NG', standard: 'Have Punch Mark On CP', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0054', process_id: 'P11', name: 'Mirror Angle - Up (No.1)', type: 'NUMERIC', standard: '> 8°', unit: '°', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0055', process_id: 'P11', name: 'Mirror Angle - Down (No.2)', type: 'NUMERIC', standard: '> -8°', unit: '°', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0056', process_id: 'P11', name: 'Mirror Angle - In (No.3)', type: 'NUMERIC', standard: '> 8°', unit: '°', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0057', process_id: 'P11', name: 'Mirror Angle - Out (No.4)', type: 'NUMERIC', standard: '> -8°', unit: '°', model_dependent: false, applicable_models: 'ALL' },
+        // P12,
+        { ci_id: 'CI-0058', process_id: 'P12', name: 'Program Selection', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3K6,3A0-LWC' },
+        { ci_id: 'CI-0059', process_id: 'P12', name: 'Air Pressure Reading', type: 'NUMERIC', standard: '0.55 ± 0.05 Mpa', unit: 'Mpa', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0060', process_id: 'P12', name: 'Tester Master Sample Check (OK)', type: 'DETECT', standard: 'Detect', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0061', process_id: 'P12', name: 'Tester Master Sample Check (NG)', type: 'DETECT', standard: 'Detect', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0062', process_id: 'P12', name: 'Camera Angle Reading', type: 'NUMERIC', standard: '0° ± 5°', unit: '°', model_dependent: false, applicable_models: 'ALL' },
+        // P13,
+        { ci_id: 'CI-0063', process_id: 'P13', name: 'Brush Bristle Condition (ACT tighten)', type: 'OK_NG', standard: 'Bristles secure, straight, intact. No loose, shedding or melted bristles.', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0064', process_id: 'P13', name: 'Grease Container (ACT tighten)', type: 'OK_NG', standard: 'Container no damage or cracks. No broken lid; no dirt entering.', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0065', process_id: 'P13', name: 'Grease Exposure (ACT tighten)', type: 'OK_NG', standard: 'Grease pure — no dust, metal flakes, foreign material, debris.', unit: '', model_dependent: false, applicable_models: 'ALL' }
       ],
       modelSpecs: {
-        // key: ci_id|model_code
         'CI-0004|T20': { value: '3.9 ± 0.2 Nm' },
         'CI-0004|3M0': { value: '3.9 ± 0.2 Nm' },
         'CI-0004|3A0': { value: '3.9 ± 0.2 Nm' },
@@ -987,12 +1058,24 @@
         'CI-0005|3K6': { value: 'T9A-E0109-0000' },
         'CI-0005|T00-4DR': { value: 'S2G-E0109-0000' },
         'CI-0005|T00-5DR': { value: 'S2G-E0109-0000' },
-        'CI-0006|T20': { value: 'Program 1' },
-        'CI-0006|3M0': { value: 'Program 1' },
-        'CI-0006|3A0': { value: 'Program 1' },
-        'CI-0006|3K6': { value: 'Program 2' },
-        'CI-0006|T00-4DR': { value: 'Program 3' },
-        'CI-0006|T00-5DR': { value: 'Program 3' },
+        'CI-0006|T20': { value: '1' },
+        'CI-0006|3M0': { value: '1' },
+        'CI-0006|3A0': { value: '1' },
+        'CI-0006|3K6': { value: '2' },
+        'CI-0006|T00-4DR': { value: '3' },
+        'CI-0006|T00-5DR': { value: '3' },
+        'CI-0007|T20': { value: 'Slot 1' },
+        'CI-0007|3M0': { value: 'Slot 1' },
+        'CI-0007|3A0': { value: 'Slot 1' },
+        'CI-0007|3K6': { value: 'Slot 2' },
+        'CI-0007|T00-4DR': { value: 'Slot 3' },
+        'CI-0007|T00-5DR': { value: 'Slot 3' },
+        'CI-0013|T20': { value: '1' },
+        'CI-0013|3M0': { value: '1' },
+        'CI-0013|T00-4DR': { value: '1' },
+        'CI-0013|T00-5DR': { value: '1' },
+        'CI-0013|3A0': { value: '1' },
+        'CI-0013|3K6': { value: '2' },
         'CI-0017|T20': { value: '2.8 ± 0.2 Nm' },
         'CI-0017|3M0': { value: '2.8 ± 0.2 Nm' },
         'CI-0017|3K6': { value: '2.8 ± 0.2 Nm' },
@@ -1002,9 +1085,21 @@
         'CI-0018|T20': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
         'CI-0018|3M0': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
         'CI-0018|3A0': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
-        'CI-0018|3K6': { value: 'Screw Wash M5x12' },
         'CI-0018|T00-4DR': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
         'CI-0018|T00-5DR': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
+        'CI-0018|3K6': { value: 'Screw Wash M5x12' },
+        'CI-0019|T20': { value: '1' },
+        'CI-0019|3M0': { value: '1' },
+        'CI-0019|T00-4DR': { value: '1' },
+        'CI-0019|T00-5DR': { value: '1' },
+        'CI-0019|3A0': { value: '1' },
+        'CI-0019|3K6': { value: '2' },
+        'CI-0020|T20': { value: 'Slot 1' },
+        'CI-0020|3M0': { value: 'Slot 1' },
+        'CI-0020|3A0': { value: 'Slot 1' },
+        'CI-0020|T00-4DR': { value: 'Slot 1' },
+        'CI-0020|T00-5DR': { value: 'Slot 1' },
+        'CI-0020|3K6': { value: 'Slot 2' },
         'CI-0026|T20': { value: '1.6 ± 0.2 Nm' },
         'CI-0026|3M0': { value: '1.6 ± 0.2 Nm' },
         'CI-0026|3A0': { value: '1.6 ± 0.2 Nm' },
@@ -1016,9 +1111,44 @@
         'CI-0027|3A0': { value: 'Tapping Truss 4x14 (SAG-E0509-0002)' },
         'CI-0027|3K6': { value: 'Tapping Pan 4x14 (TDE-E0509-0000)' },
         'CI-0027|T00-4DR': { value: 'Tapping Pan 4x14 (TDE-E0509-0000)' },
-        'CI-0027|T00-5DR': { value: 'Tapping Pan 4x14 (TDE-E0509-0000)' }
+        'CI-0027|T00-5DR': { value: 'Tapping Pan 4x14 (TDE-E0509-0000)' },
+        'CI-0028|T20': { value: '1' },
+        'CI-0028|3M0': { value: '1' },
+        'CI-0028|3A0': { value: '1' },
+        'CI-0028|3K6': { value: '2' },
+        'CI-0028|T00-4DR': { value: '2' },
+        'CI-0028|T00-5DR': { value: '2' },
+        'CI-0028|3A0-HEV': { value: '3' },
+        'CI-0029|T20': { value: 'Slot 1' },
+        'CI-0029|3M0': { value: 'Slot 1' },
+        'CI-0029|3A0': { value: 'Slot 1' },
+        'CI-0029|3K6': { value: 'Slot 2' },
+        'CI-0029|T00-4DR': { value: 'Slot 2' },
+        'CI-0029|T00-5DR': { value: 'Slot 2' },
+        'CI-0034|T20': { value: '1.5 ± 0.2 Nm' },
+        'CI-0034|3M0': { value: '1.5 ± 0.2 Nm' },
+        'CI-0034|3A0': { value: '1.5 ± 0.2 Nm' },
+        'CI-0034|3K6': { value: '1.1 ± 0.2 Nm' },
+        'CI-0034|T00-4DR': { value: '1.1 ± 0.2 Nm' },
+        'CI-0034|T00-5DR': { value: '1.1 ± 0.2 Nm' },
+        'CI-0036|T20': { value: '1' },
+        'CI-0036|3M0': { value: '1' },
+        'CI-0036|3A0': { value: '1' },
+        'CI-0036|3K6': { value: '2' },
+        'CI-0036|T00-4DR': { value: '2' },
+        'CI-0036|T00-5DR': { value: '2' },
+        'CI-0036|3A0-VHEV': { value: '3' },
+        'CI-0043|T20': { value: 'RHL=1 | RHR=2' },
+        'CI-0043|3M0': { value: 'RHL=3 | RHR=4' },
+        'CI-0043|3A0': { value: 'RHL=3 | RHR=4' },
+        'CI-0043|3K6': { value: 'RHL=5 | RHR=6' },
+        'CI-0043|3A0-VHEV': { value: 'RHL=7' },
+        'CI-0058|T20': { value: '1' },
+        'CI-0058|3M0': { value: '2' },
+        'CI-0058|3K6': { value: '3' },
+        'CI-0058|3A0-LWC': { value: '4' }
       },
-      users: [
+            users: [
         { user_id: 'USR-001', name: 'Ahmad Y.', role: 'Production Leader' },
         { user_id: 'USR-002', name: 'Siti Aminah', role: 'Operator' },
         { user_id: 'USR-003', name: 'Lim W.M.', role: 'Operator' },
@@ -1027,15 +1157,15 @@
       ],
       inspections: [
         { id: 'INS-2026-0001', date: '2026-06-28', model: 'T20', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
-          leader: 'Ahmad Y.', status: 'Completed', result: 'PASSED', total: 24, done: 24, ng: 0 },
+          leader: 'Ahmad Y.', status: 'Completed', result: 'PASSED', total: 63, done: 63, ng: 0 },
         { id: 'INS-2026-0002', date: '2026-06-30', model: '3K6', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
-          leader: 'Ahmad Y.', status: 'In Progress', result: '', total: 22, done: 14, ng: 0 },
+          leader: 'Ahmad Y.', status: 'In Progress', result: '', total: 62, done: 5, ng: 0 },
         { id: 'INS-2026-0003', date: '2026-06-29', model: 'T00-4DR', side: 'RH-L', line: 'L2-DM-B', shift: 'B',
-          leader: 'Raj K.', status: 'Failed', result: 'ACTION NEEDED', total: 25, done: 25, ng: 2 },
+          leader: 'Raj K.', status: 'Failed', result: 'ACTION NEEDED', total: 61, done: 61, ng: 2 },
         { id: 'INS-2026-0004', date: '2026-06-30', model: '3M0', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
-          leader: 'Ahmad Y.', status: 'Scheduled', result: '', total: 24, done: 0, ng: 0 },
+          leader: 'Ahmad Y.', status: 'Scheduled', result: '', total: 63, done: 0, ng: 0 },
         { id: 'INS-2026-0005', date: '2026-06-27', model: '3A0', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
-          leader: 'Ahmad Y.', status: 'Overdue', result: '', total: 24, done: 0, ng: 0 }
+          leader: 'Ahmad Y.', status: 'Overdue', result: '', total: 63, done: 0, ng: 0 }
       ],
       // Pre-filled sample results for INS-2026-0002 (in progress) for the demo view
       results: {
@@ -1110,6 +1240,12 @@
       if (!ci.model_dependent) return ci.standard;
       const spec = DB.modelSpecs[`${ci.ci_id}|${modelCode}`];
       return spec ? spec.value : '(no spec)';
+    }
+    // Is this control item applicable to the given model?
+    // 'ALL' items always apply; otherwise the model must be in the list.
+    function isApplicable(ci, model) {
+      if (!ci.applicable_models || ci.applicable_models === 'ALL') return true;
+      return ci.applicable_models.split(',').map(s => s.trim()).includes(model);
     }
     function getProcess(processId) {
       return DB.processes.find(p => p.process_id === processId);
@@ -1381,16 +1517,27 @@
       const ins = getInspection(inspId);
       if (!ins) return renderFillList();
 
-      // Group control items by process
+      // Only show control items applicable to THIS inspection's model
+      const applicable = DB.controlItems.filter(ci => isApplicable(ci, ins.model));
+
+      // Group applicable items by process
       const itemsByProcess = {};
-      DB.controlItems.forEach(ci => {
+      applicable.forEach(ci => {
         if (!itemsByProcess[ci.process_id]) itemsByProcess[ci.process_id] = [];
         itemsByProcess[ci.process_id].push(ci);
       });
 
-      const progress = Math.round((ins.done / ins.total) * 100);
+      // Real progress based on applicable items (not a hardcoded total)
+      const total = applicable.length;
+      let done = 0;
+      applicable.forEach(ci => { if (getResult(inspId, ci.ci_id)) done++; });
+      const progress = total > 0 ? Math.round((done / total) * 100) : 0;
 
-      const sections = Object.keys(itemsByProcess).map(pid => {
+      // Show processes in their proper sequence order
+      const orderedPids = Object.keys(itemsByProcess)
+        .sort((a, b) => getProcess(a).seq - getProcess(b).seq);
+
+      const sections = orderedPids.map(pid => {
         const proc = getProcess(pid);
         const items = itemsByProcess[pid];
         return `
@@ -1455,7 +1602,7 @@
           <div class="insp-header-meta">
             <div><div class="label">Line / Shift</div><div class="value">${ins.line} / ${ins.shift}</div></div>
             <div><div class="label">Leader</div><div class="value">${ins.leader}</div></div>
-            <div><div class="label">Progress</div><div class="value">${ins.done}/${ins.total}</div></div>
+            <div><div class="label">Progress</div><div class="value">${done}/${total}</div></div>
             <div><div class="label">NG count</div><div class="value">${ins.ng}</div></div>
           </div>
           <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
