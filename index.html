@@ -655,8 +655,8 @@
     }
     .insp-header-meta {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px 8px;
       font-size: 11px;
     }
     .insp-header-meta .label { color: var(--text-muted); }
@@ -1257,7 +1257,7 @@
         line: '',
         shift: '',
         customer: '',
-        supv: '',
+        variance: '',
         leader: '',
         models: [
           { model: '', lots: '', sides: ['RH-L', 'RH-R'] }
@@ -1472,8 +1472,8 @@
                 ${customDropdown('shift', ['A', 'B'], state.planForm.shift)}
               </div>
               <div class="form-field">
-                <label>Duty Supv</label>
-                ${customDropdown('supv', ['Bob', 'Raj'], state.planForm.supv)}
+                <label>Duty Leader</label>
+                ${customDropdown('leader', ['Angah', 'Oppa'], state.planForm.leader)}
               </div>
               <div class="form-field">
                 <label>Line</label>
@@ -1484,8 +1484,8 @@
                 ${customDropdown('customer', ['OEM', 'HPC', 'ATS'], state.planForm.customer)}
               </div>
               <div class="form-field">
-                <label>Duty Leader</label>
-                ${customDropdown('leader', ['Angah', 'Oppa'], state.planForm.leader)}
+                <label>Variance</label>
+                ${customDropdown('variance', ['E', 'V', 'RS', 'HEV E', 'HEV V', 'HEV RS'], state.planForm.variance)}
               </div>
             </div>
 
@@ -1704,8 +1704,10 @@
           </div>
           <div class="insp-header-title">Door Mirror Job Setup &mdash; ${ins.model} ${ins.side}</div>
           <div class="insp-header-meta">
+            <div><div class="label">Date</div><div class="value">${fmtDate(ins.date) || '-'}</div></div>
             <div><div class="label">Line / Shift</div><div class="value">${ins.line} / ${ins.shift}</div></div>
-            <div><div class="label">Leader</div><div class="value">${ins.leader}</div></div>
+            <div><div class="label">Variance</div><div class="value">${ins.variance || '-'}</div></div>
+            <div><div class="label">Leader</div><div class="value">${ins.leader || '-'}</div></div>
             <div><div class="label">Progress</div><div class="value">${done}/${total}</div></div>
             <div><div class="label">NG count</div><div class="value">${ins.ng}</div></div>
           </div>
@@ -2025,7 +2027,7 @@
         if (!f.line) missing.push('Line');
         if (!f.shift) missing.push('Shift');
         if (!f.customer) missing.push('Customer');
-        if (!f.supv) missing.push('Duty Supv');
+        if (!f.variance) missing.push('Variance');
         if (!f.leader) missing.push('Duty Leader');
         if (missing.length > 0) {
           alert('Please fill: ' + missing.join(', '));
@@ -2282,6 +2284,7 @@
           side: i.side,
           line: i.asset_line || i.line || '',
           shift: i.shift,
+          variance: i.variance || '',
           leader: userName[i.operator_id] || i.leader || '',
           status: i.status,
           result: i.result || '',
@@ -2369,7 +2372,7 @@
             action: 'addPlan',
             plan: {
               date: f.date, line: f.line, shift: f.shift,
-              customer: f.customer, supv: f.supv, leader: f.leader
+              customer: f.customer, variance: f.variance, leader: f.leader
             },
             models: validModels.map(m => ({
               model: m.model, lots: m.lots, sides: m.sides
@@ -2382,7 +2385,7 @@
 
         // Reset the form for the next entry
         state.planForm = {
-          date: '', line: '', shift: '', customer: '', supv: '', leader: '',
+          date: '', line: '', shift: '', customer: '', variance: '', leader: '',
           models: [{ model: '', lots: '', sides: ['RH-L', 'RH-R'] }]
         };
         // Jump the dashboard to the plan's date so the new inspections show
