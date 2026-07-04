@@ -540,10 +540,16 @@
       margin-bottom: 10px;
     }
     .date-quick-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 6px;
       margin-bottom: 10px;
-      flex-wrap: wrap;
+    }
+    .date-quick-row .filter-pill {
+      padding: 6px 4px;
+      font-size: 11px;
+      text-align: center;
+      white-space: nowrap;
     }
     .date-range-row {
       display: grid;
@@ -1530,9 +1536,9 @@
           <div class="advanced-filters">
             <div class="date-quick-row">
               <button class="filter-pill" data-action="history-quick-date" data-val="today">Today</button>
-              <button class="filter-pill" data-action="history-quick-date" data-val="week">Last 7 days</button>
-              <button class="filter-pill" data-action="history-quick-date" data-val="month">This month</button>
-              <button class="filter-pill" data-action="history-quick-date" data-val="clear">Clear dates</button>
+              <button class="filter-pill" data-action="history-quick-date" data-val="week">7 days</button>
+              <button class="filter-pill" data-action="history-quick-date" data-val="month">Month</button>
+              <button class="filter-pill" data-action="history-quick-date" data-val="clear">Clear</button>
             </div>
             <div class="date-range-row">
               <div class="form-field">
