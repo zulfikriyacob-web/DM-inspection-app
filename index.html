@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#6366F1">
+  <title>Door Mirror Inspection App</title>
+  <style>
+    /* =========================================================
+       DESIGN TOKENS
+       ========================================================= */
+    :root {
+      --bg: #F9FAFB;
+      --surface: #FFFFFF;
+      --surface-2: #F3F4F6;
+      --border: #E5E7EB;
+      --border-strong: #D1D5DB;
+      --text: #111827;
+      --text-secondary: #6B7280;
+      --text-muted: #9CA3AF;
+      --accent: #6366F1;
+      --accent-bg: #EEF2FF;
+      --accent-text: #4338CA;
+      --success: #10B981;
+      --success-bg: #D1FAE5;
+      --success-text: #065F46;
+      --warning: #F59E0B;
+      --warning-bg: #FEF3C7;
+      --warning-text: #92400E;
+      --danger: #EF4444;
+      --danger-bg: #FEE2E2;
+      --danger-text: #991B1B;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-pill: 999px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    /* =========================================================
+       RESET & BASE
+       ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+    }
+    button { font-family: inherit; cursor: pointer; }
+    input, select { font-family: inherit; font-size: 14px; }
+
+    /* =========================================================
+       APP SHELL
+       ========================================================= */
+    header.app-header {
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .brand { display: flex; flex-direction: column; }
+    .brand-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .brand-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .live-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent-bg); color: var(--accent-text);
+      font-size: 11px; font-weight: 600;
+      padding: 4px 10px; border-radius: var(--radius-pill);
+    }
+    .live-pill::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-text);
+    }
+
+    main {
+      padding: clamp(12px, 3vw, 24px);
+      padding-bottom: 96px;
+      max-width: 1080px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    nav.tab-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 10;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .tab-bar button {
+      flex: 1; background: none; border: none;
+      padding: 14px 8px 16px;
+      font-size: 12px; font-weight: 500;
+      color: var(--text-secondary);
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .tab-bar button.active { color: var(--accent); }
+    .tab-icon {
+      width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+
+    /* =========================================================
+       SECTIONS, CARDS, TYPOGRAPHY
+       ========================================================= */
+    .page-title { font-size: clamp(18px, 3.5vw, 24px); font-weight: 600; margin: 0 0 4px; }
+    .page-subtitle { font-size: clamp(12px, 2.2vw, 14px); color: var(--text-secondary); margin: 0 0 16px; }
+
+    .section-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: 18px 4px 8px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+    .card-flush { padding: 0; overflow: hidden; }
+
+    /* =========================================================
+       KPI CARDS GRID
+       ========================================================= */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(6px, 1.5vw, 12px);
+      margin-bottom: 12px;
+    }
+
+    /* =========================================================
+       FLUID / RESPONSIVE BREAKPOINTS
+       ========================================================= */
+    /* Narrow phones */
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-row { grid-template-columns: 1fr; }
+      .plan-header-grid { grid-template-columns: 1fr 1fr; }
+      .model-row-inline {
+        grid-template-columns: 1fr 58px;
+      }
+      .model-row-inline .form-field:last-child {
+        grid-column: 1 / -1;  /* Sides drop to own row, full width */
+      }
+      .insp-header-meta { grid-template-columns: repeat(2, 1fr); row-gap: 10px; }
+    }
+    /* Tablets and up: two-column layout for check item cards */
+    @media (min-width: 720px) {
+      .check-items-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .check-items-grid .check-item-card { margin-bottom: 0; }
+      .insp-list-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .insp-list-grid .insp-card { margin-bottom: 0; }
+    }
+    /* Wide desktop: three-column inspection lists */
+    @media (min-width: 1000px) {
+      .insp-list-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(10px, 2.5vw, 16px);
+      text-align: center;
+    }
+    .kpi-card.clickable {
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
+    }
+    .kpi-card.clickable:hover {
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    .kpi-card.clickable:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-value { font-size: clamp(20px, 4vw, 26px); font-weight: 600; line-height: 1.2; }
+    .kpi-label { font-size: clamp(10px, 2vw, 12px); color: var(--text-secondary); margin-top: 2px; }
+    .kpi-value.scheduled { color: var(--accent); }
+    .kpi-value.completed { color: var(--success); }
+    .kpi-value.in-progress { color: var(--warning); }
+    .kpi-value.overdue { color: var(--danger); }
+
+    /* =========================================================
+       INSPECTION LIST CARD (DASHBOARD)
+       ========================================================= */
+    .insp-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 8px;
+      transition: background 0.15s;
+    }
+    .insp-card:active { background: var(--surface-2); }
+    .insp-card.clickable { cursor: pointer; }
+    .insp-bar { width: 4px; flex-shrink: 0; }
+    .insp-bar.completed { background: var(--success); }
+    .insp-bar.in-progress { background: var(--accent); }
+    .insp-bar.failed { background: var(--danger); }
+    .insp-bar.scheduled { background: var(--border-strong); }
+    .insp-bar.overdue { background: var(--warning); }
+
+    .insp-body {
+      padding: 12px 14px;
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .insp-main { min-width: 0; flex: 1; }
+    .insp-id-title {
+      font-size: 13px; color: var(--text);
+      margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .insp-id { font-weight: 600; }
+    .insp-meta { font-size: 12px; color: var(--text-secondary); }
+    .insp-meta .status-text { font-weight: 600; }
+    .status-text.passed { color: var(--success-text); }
+    .status-text.in-progress { color: var(--accent-text); }
+    .status-text.failed { color: var(--danger-text); }
+    .status-text.scheduled { color: var(--text-secondary); }
+    .status-text.overdue { color: var(--warning-text); }
+
+    .status-pill {
+      font-size: 10px; font-weight: 600;
+      padding: 4px 10px; border-radius: var(--radius-pill);
+      flex-shrink: 0;
+    }
+    .status-pill.completed { background: var(--success-bg); color: var(--success-text); }
+    .status-pill.in-progress { background: var(--accent-bg); color: var(--accent-text); }
+    .status-pill.failed { background: var(--danger-bg); color: var(--danger-text); }
+    .status-pill.scheduled { background: var(--surface-2); color: var(--text-secondary); }
+    .status-pill.overdue { background: var(--warning-bg); color: var(--warning-text); }
+
+    /* =========================================================
+       FORM ELEMENTS
+       ========================================================= */
+    .form-grid { display: grid; gap: 10px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    /* 3-column header grid for the production plan (Date/Shift/Supv | Line/Cust/Leader) */
+    .plan-header-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    /* Plan header field labels: darker, matching the 'Models' sublabel weight */
+    .plan-header-grid .form-field label {
+      color: var(--text);
+      font-weight: 600;
+    }
+    /* Grey out selects/inputs that are still on their placeholder (empty value).
+       !important helps override mobile browsers' native select styling. */
+    select.is-placeholder,
+    input.is-placeholder { color: #AFB6C2 !important; }
+    select option { color: var(--text); }
+    select.is-placeholder option[value=""][disabled] { color: #AFB6C2; }
+    select option[value=""][disabled] { color: #AFB6C2; }
+    input::placeholder { color: #AFB6C2 !important; opacity: 1; }
+    input.is-placeholder::-webkit-datetime-edit { color: #AFB6C2 !important; }
+
+    /* =========================================================
+       CUSTOM DROPDOWN (consistent look on every device)
+       ========================================================= */
+    .dropdown { position: relative; }
+    .dropdown-btn {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-size: 14px;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .dropdown-btn:hover { border-color: var(--text-muted); }
+    .dropdown-btn.open {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+    .dropdown-label {
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .dropdown-btn.is-placeholder .dropdown-label { color: #AFB6C2; }
+    .dropdown-arrow {
+      color: var(--text-muted);
+      font-size: 11px;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .dropdown-btn.open .dropdown-arrow { transform: rotate(180deg); }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      z-index: 20;
+    }
+    .dropdown-menu.open { display: block; }
+    .dropdown-option {
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .dropdown-option:hover { background: var(--surface-2); }
+    .dropdown-option.selected {
+      background: var(--accent-bg);
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-field label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+    }
+    .form-field input, .form-field select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-field input:focus, .form-field select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+    .checkbox-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .checkbox-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-pill);
+      background: var(--surface);
+      font-size: 13px;
+      user-select: none;
+      transition: all 0.15s;
+    }
+    .checkbox-pill input { display: none; }
+    .checkbox-pill.checked {
+      background: var(--accent-bg);
+      border-color: var(--accent);
+      color: var(--accent-text);
+      font-weight: 600;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px; font-weight: 500;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: var(--surface-2); }
+    .btn-primary {
+      background: var(--accent); color: white; border-color: var(--accent);
+    }
+    .btn-primary:hover { background: var(--accent-text); border-color: var(--accent-text); }
+    .btn-block { width: 100%; }
+
+    /* =========================================================
+       FILTER PILLS
+       ========================================================= */
+    .filter-row {
+      display: flex; gap: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-pill {
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 12px; font-weight: 500;
+      white-space: nowrap;
+    }
+    .filter-pill.active {
+      background: var(--text); color: var(--surface);
+      border-color: var(--text);
+    }
+
+    /* =========================================================
+       CHECK SHEET DETAIL VIEW
+       ========================================================= */
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 12px;
+      background: none; border: none;
+      color: var(--text-secondary);
+      font-size: 13px; font-weight: 500;
+      margin-left: -8px; margin-bottom: 8px;
+    }
+
+    .insp-header-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .insp-header-top {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 8px;
+    }
+    .insp-header-id {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted); letter-spacing: 0.05em;
+    }
+    .insp-header-title {
+      font-size: 15px; font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .insp-header-meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      font-size: 11px;
+    }
+    .insp-header-meta .label { color: var(--text-muted); }
+    .insp-header-meta .value { color: var(--text); font-weight: 600; margin-top: 2px; }
+    .progress-bar {
+      height: 4px;
+      background: var(--surface-2);
+      border-radius: var(--radius-pill);
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .check-item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      margin-bottom: 8px;
+    }
+    .check-item-bar { width: 4px; flex-shrink: 0; }
+    .check-item-bar.ok { background: var(--success); }
+    .check-item-bar.ng { background: var(--danger); }
+    .check-item-bar.pending { background: var(--border-strong); }
+
+    .check-item-body { padding: 12px 14px; flex: 1; }
+    .check-item-top {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; gap: 8px; margin-bottom: 6px;
+    }
+    .check-item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .check-item-standard {
+      font-size: 11px; color: var(--text-secondary);
+      margin-bottom: 10px; line-height: 1.5;
+    }
+    .check-item-standard .value { color: var(--text); font-weight: 600; }
+    .check-item-standard .auto { color: var(--text-muted); }
+    .check-item-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 11px;
+    }
+    .check-item-controls.single { grid-template-columns: 1fr; }
+    .control-readout {
+      background: var(--surface-2);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+    }
+    .control-readout .label { color: var(--text-muted); font-size: 10px; }
+    .control-readout .value { color: var(--text); font-weight: 600; }
+    .control-readout .empty { color: var(--text-muted); font-style: italic; }
+
+    .ok-ng-buttons { display: flex; gap: 4px; }
+    .ok-ng-buttons button {
+      flex: 1;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .ok-ng-buttons button.selected.ok {
+      background: var(--success-bg); color: var(--success-text);
+      border-color: var(--success);
+    }
+    .ok-ng-buttons button.selected.ng {
+      background: var(--danger-bg); color: var(--danger-text);
+      border-color: var(--danger);
+    }
+
+    /* =========================================================
+       EMPTY STATE & UTILITIES
+       ========================================================= */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+    .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+    .empty-state .title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .empty-state .desc { font-size: 13px; }
+
+    .hidden { display: none !important; }
+
+    /* =========================================================
+       MULTI-MODEL FORM SECTION (Dashboard)
+       ========================================================= */
+    .section-sublabel {
+      font-size: 12px; font-weight: 600;
+      color: var(--text);
+      margin: 6px 0 4px;
+    }
+    .model-row {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 36px 12px 12px;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .model-row-inline {
+      display: grid;
+      grid-template-columns: 1fr 58px auto;
+      gap: 8px;
+      align-items: end;
+    }
+    .model-row-inline .form-field input,
+    .model-row-inline .form-field select {
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+    .model-row-inline .checkbox-group {
+      flex-wrap: nowrap;
+      gap: 6px;
+    }
+    .model-row-inline .checkbox-pill {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+    .model-remove-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 14px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      z-index: 1;
+    }
+    .model-remove-btn:hover {
+      color: var(--danger);
+      border-color: var(--danger);
+      background: var(--danger-bg);
+    }
+    .row-qty-display {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .row-qty-value {
+      color: var(--text);
+      font-weight: 700;
+    }
+    .add-model-btn {
+      width: 100%;
+      padding: 10px;
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 4px;
+      transition: all 0.15s;
+    }
+    .add-model-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-bg);
+    }
+    .total-qty-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: var(--accent-bg);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      margin-top: 4px;
+    }
+    .total-qty-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-text);
+    }
+    .total-qty-subtle {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    .total-qty-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent-text);
+    }
+
+    /* =========================================================
+       PROGRESS BAR CHART (completion by model)
+       ========================================================= */
+    .progress-chart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(12px, 2.5vw, 16px);
+      margin-bottom: 12px;
+    }
+    .progress-chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .progress-chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .progress-chart-legend {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+    .legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+    .legend-swatch.done { background: var(--success); }
+    .legend-swatch.remain { background: var(--surface-2); border: 1px solid var(--border-strong); }
+
+    .progress-bar-row {
+      display: grid;
+      grid-template-columns: 68px 1fr 54px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .progress-bar-row:last-child { margin-bottom: 0; }
+    .progress-bar-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .progress-bar-track {
+      height: 22px;
+      background: var(--surface-2);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--success);
+      border-radius: 6px 0 0 6px;
+      transition: width 0.4s ease;
+      min-width: 2px;
+    }
+    .progress-bar-fill.full { border-radius: 6px; }
+    .progress-bar-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .progress-chart-empty {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 12px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== APP HEADER ===== -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-name">L2 Door Mirror</div>
+      <div class="brand-meta">Armstrong Auto Parts &middot; Shift A</div>
+    </div>
+    <div class="live-pill">Live</div>
+  </header>
+
+  <!-- ===== MAIN CONTENT (rendered by JS) ===== -->
+  <main id="main"></main>
+
+  <!-- ===== BOTTOM TAB BAR ===== -->
+  <nav class="tab-bar">
+    <button data-tab="dashboard" class="active">
+      <span class="tab-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+      </span>
+      Dashboard
+    </button>
+    <button data-tab="fill">
+      <span class="tab-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </span>
+      Check Sheet
+    </button>
+    <button data-tab="history">
+      <span class="tab-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
+      History
+    </button>
+  </nav>
+
+  <script>
+    // =========================================================
+    // MOCK DATA (mirrors Google Sheets structure)
+    // In production, this layer will be replaced by Google Sheets API calls.
+    // =========================================================
+    const DB = {
+      templates: [
+        { template_id: 'TPL-001', code: 'PGE-GE-001-C', title: 'Door Mirror Job Set-Up Production',
+          revision: 'C', line: 'L2 Door Mirror' }
+      ],
+      models: [
+        { model_code: 'T20', description: 'T20 base model' },
+        { model_code: '3M0', description: '3M0 model' },
+        { model_code: '3A0', description: '3A0 model' },
+        { model_code: '3K6', description: '3K6 model' },
+        { model_code: 'T00-4DR', description: 'T00 4-door' },
+        { model_code: 'T00-5DR', description: 'T00 5-door' }
+      ],
+      processes: [
+        { process_id: 'P02', seq: 2, name: 'Base Comp Tighten' },
+        { process_id: 'P03', seq: 3, name: 'Camera Installation' },
+        { process_id: 'P05', seq: 5, name: 'Base Tighten' },
+        { process_id: 'P07', seq: 7, name: 'Bracket Tighten' },
+        { process_id: 'P08', seq: 8, name: 'ACT Tighten' }
+      ],
+      controlItems: [
+        // P02
+        { ci_id: 'CI-0002', process_id: 'P02', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', model_dependent: false },
+        { ci_id: 'CI-0004', process_id: 'P02', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '', unit: 'Nm', model_dependent: true },
+        { ci_id: 'CI-0005', process_id: 'P02', name: 'Bold Stud Type M6', type: 'TEXT', standard: '', model_dependent: true },
+        { ci_id: 'CI-0006', process_id: 'P02', name: 'Program Selection', type: 'TEXT', standard: '', model_dependent: true },
+        { ci_id: 'CI-0008', process_id: 'P02', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', model_dependent: false },
+        // P05
+        { ci_id: 'CI-0017', process_id: 'P05', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '', unit: 'Nm', model_dependent: true },
+        { ci_id: 'CI-0018', process_id: 'P05', name: 'Screw Type', type: 'TEXT', standard: '', model_dependent: true },
+        { ci_id: 'CI-0021', process_id: 'P05', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', model_dependent: false },
+        // P07
+        { ci_id: 'CI-0024', process_id: 'P07', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', model_dependent: false },
+        { ci_id: 'CI-0026', process_id: 'P07', name: 'Torque Driver Reading', type: 'NUMERIC', standard: '', unit: 'Nm', model_dependent: true },
+        { ci_id: 'CI-0027', process_id: 'P07', name: 'Screw Type', type: 'TEXT', standard: '', model_dependent: true }
+      ],
+      modelSpecs: {
+        // key: ci_id|model_code
+        'CI-0004|T20': { value: '3.9 ± 0.2 Nm' },
+        'CI-0004|3M0': { value: '3.9 ± 0.2 Nm' },
+        'CI-0004|3A0': { value: '3.9 ± 0.2 Nm' },
+        'CI-0004|3K6': { value: '4.8 ± 0.2 Nm' },
+        'CI-0004|T00-4DR': { value: '3.5 ± 0.2 Nm' },
+        'CI-0004|T00-5DR': { value: '3.5 ± 0.2 Nm' },
+        'CI-0005|T20': { value: 'T20-E0109-0000' },
+        'CI-0005|3M0': { value: 'T20-E0109-0000' },
+        'CI-0005|3A0': { value: 'T20-E0109-0000' },
+        'CI-0005|3K6': { value: 'T9A-E0109-0000' },
+        'CI-0005|T00-4DR': { value: 'S2G-E0109-0000' },
+        'CI-0005|T00-5DR': { value: 'S2G-E0109-0000' },
+        'CI-0006|T20': { value: 'Program 1' },
+        'CI-0006|3M0': { value: 'Program 1' },
+        'CI-0006|3A0': { value: 'Program 1' },
+        'CI-0006|3K6': { value: 'Program 2' },
+        'CI-0006|T00-4DR': { value: 'Program 3' },
+        'CI-0006|T00-5DR': { value: 'Program 3' },
+        'CI-0017|T20': { value: '2.8 ± 0.2 Nm' },
+        'CI-0017|3M0': { value: '2.8 ± 0.2 Nm' },
+        'CI-0017|3K6': { value: '2.8 ± 0.2 Nm' },
+        'CI-0017|3A0': { value: '2.8 ± 0.2 Nm' },
+        'CI-0017|T00-4DR': { value: '2.9 +0.2/-0.1 Nm' },
+        'CI-0017|T00-5DR': { value: '2.9 +0.2/-0.1 Nm' },
+        'CI-0018|T20': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
+        'CI-0018|3M0': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
+        'CI-0018|3A0': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
+        'CI-0018|3K6': { value: 'Screw Wash M5x12' },
+        'CI-0018|T00-4DR': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
+        'CI-0018|T00-5DR': { value: 'Tapping Pan M5x20 (TG1-E0503-0000)' },
+        'CI-0026|T20': { value: '1.6 ± 0.2 Nm' },
+        'CI-0026|3M0': { value: '1.6 ± 0.2 Nm' },
+        'CI-0026|3A0': { value: '1.6 ± 0.2 Nm' },
+        'CI-0026|3K6': { value: '1.1 ± 0.2 Nm' },
+        'CI-0026|T00-4DR': { value: '1.1 ± 0.2 Nm' },
+        'CI-0026|T00-5DR': { value: '1.1 ± 0.2 Nm' },
+        'CI-0027|T20': { value: 'Tapping Truss 4x14 (SAG-E0509-0002)' },
+        'CI-0027|3M0': { value: 'Tapping Truss 4x14 (SAG-E0509-0002)' },
+        'CI-0027|3A0': { value: 'Tapping Truss 4x14 (SAG-E0509-0002)' },
+        'CI-0027|3K6': { value: 'Tapping Pan 4x14 (TDE-E0509-0000)' },
+        'CI-0027|T00-4DR': { value: 'Tapping Pan 4x14 (TDE-E0509-0000)' },
+        'CI-0027|T00-5DR': { value: 'Tapping Pan 4x14 (TDE-E0509-0000)' }
+      },
+      users: [
+        { user_id: 'USR-001', name: 'Ahmad Y.', role: 'Production Leader' },
+        { user_id: 'USR-002', name: 'Siti Aminah', role: 'Operator' },
+        { user_id: 'USR-003', name: 'Lim W.M.', role: 'Operator' },
+        { user_id: 'USR-010', name: 'Zul Fikri', role: 'Sr. QE' },
+        { user_id: 'USR-011', name: 'Nurul Huda', role: 'QA Inspector' }
+      ],
+      inspections: [
+        { id: 'INS-2026-0001', model: 'T20', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
+          leader: 'Ahmad Y.', status: 'Completed', result: 'PASSED', total: 24, done: 24, ng: 0 },
+        { id: 'INS-2026-0002', model: '3K6', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
+          leader: 'Ahmad Y.', status: 'In Progress', result: '', total: 22, done: 14, ng: 0 },
+        { id: 'INS-2026-0003', model: 'T00-4DR', side: 'RH-L', line: 'L2-DM-B', shift: 'B',
+          leader: 'Raj K.', status: 'Failed', result: 'ACTION NEEDED', total: 25, done: 25, ng: 2 },
+        { id: 'INS-2026-0004', model: '3M0', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
+          leader: 'Ahmad Y.', status: 'Scheduled', result: '', total: 24, done: 0, ng: 0 },
+        { id: 'INS-2026-0005', model: '3A0', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
+          leader: 'Ahmad Y.', status: 'Overdue', result: '', total: 24, done: 0, ng: 0 }
+      ],
+      // Pre-filled sample results for INS-2026-0002 (in progress) for the demo view
+      results: {
+        'INS-2026-0002|CI-0002': { judgement: 'OK', pic: 'Ahmad Y.' },
+        'INS-2026-0002|CI-0004': { judgement: 'OK', pic: 'Ahmad Y.', value: '4.75' },
+        'INS-2026-0002|CI-0005': { judgement: 'OK', pic: 'Ahmad Y.' },
+        'INS-2026-0002|CI-0006': { judgement: 'OK', pic: 'Ahmad Y.' },
+        'INS-2026-0002|CI-0008': { judgement: 'OK', pic: 'Siti Aminah' }
+      }
+    };
+
+    // =========================================================
+    // APP STATE
+    // =========================================================
+    const state = {
+      currentTab: 'dashboard',
+      selectedInspectionId: null,  // for Fill Check Sheet detail view
+      historyFilter: 'all',
+      fillFilter: 'all',
+      planForm: {
+        date: '',
+        line: '',
+        shift: '',
+        customer: '',
+        supv: '',
+        leader: '',
+        models: [
+          { model: 'T20', lots: 1, sides: ['RH-L', 'RH-R'] }
+        ]
+      }
+    };
+
+    // =========================================================
+    // DATA HELPERS
+    // =========================================================
+    const PCS_PER_LOT = 30;  // 1 lot = 30 pcs per side (adjust if line standard changes)
+
+    function kpis() {
+      const all = DB.inspections;
+      return {
+        scheduled: all.length,
+        completed: all.filter(i => i.status === 'Completed').length,
+        inProgress: all.filter(i => i.status === 'In Progress').length,
+        overdue: all.filter(i => i.status === 'Overdue').length
+      };
+    }
+    function calculateTotalQty() {
+      return state.planForm.models.reduce((sum, m) =>
+        sum + (parseInt(m.lots) || 0) * m.sides.length * PCS_PER_LOT, 0
+      );
+    }
+    // Aggregate completion by model. Returns [{ label, done, total, pct }]
+    // Extensible: swap the groupBy key later to chart by process, line, customer, etc.
+    function progressByModel() {
+      const groups = {};
+      DB.inspections.forEach(ins => {
+        if (!groups[ins.model]) groups[ins.model] = { done: 0, total: 0 };
+        groups[ins.model].done += ins.done;
+        groups[ins.model].total += ins.total;
+      });
+      return Object.keys(groups).map(model => {
+        const g = groups[model];
+        const pct = g.total > 0 ? Math.round((g.done / g.total) * 100) : 0;
+        return { label: model, done: g.done, total: g.total, pct };
+      }).sort((a, b) => b.pct - a.pct);
+    }
+    function getStandard(ci, modelCode) {
+      if (!ci.model_dependent) return ci.standard;
+      const spec = DB.modelSpecs[`${ci.ci_id}|${modelCode}`];
+      return spec ? spec.value : '(no spec)';
+    }
+    function getProcess(processId) {
+      return DB.processes.find(p => p.process_id === processId);
+    }
+    function getInspection(id) {
+      return DB.inspections.find(i => i.id === id);
+    }
+    function getResult(inspId, ciId) {
+      return DB.results[`${inspId}|${ciId}`] || null;
+    }
+    function statusClass(status) {
+      const map = { 'Completed': 'completed', 'In Progress': 'in-progress',
+                    'Failed': 'failed', 'Scheduled': 'scheduled', 'Overdue': 'overdue' };
+      return map[status] || 'scheduled';
+    }
+
+    // =========================================================
+    // VIEW: DASHBOARD
+    // =========================================================
+    // Build a custom dropdown's HTML.
+    // field = the planForm key (e.g. 'shift'); options = array of values; current = selected value
+    function customDropdown(field, options, current) {
+      const isEmpty = !current;
+      const optionsHtml = options.map(opt => `
+        <div class="dropdown-option ${opt === current ? 'selected' : ''}"
+             data-dd-field="${field}" data-dd-value="${opt}">${opt}</div>
+      `).join('');
+      return `
+        <div class="dropdown" data-dd-name="${field}">
+          <button type="button" class="dropdown-btn ${isEmpty ? 'is-placeholder' : ''}" data-dd-toggle="${field}">
+            <span class="dropdown-label">${isEmpty ? 'select…' : current}</span>
+            <span class="dropdown-arrow">&#9662;</span>
+          </button>
+          <div class="dropdown-menu" data-dd-menu="${field}">
+            ${optionsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDashboard() {
+      const k = kpis();
+      const totalQty = calculateTotalQty();
+      const modelDropdown = (selected) => DB.models.map(m =>
+        `<option ${m.model_code === selected ? 'selected' : ''}>${m.model_code}</option>`
+      ).join('');
+
+      const modelProgress = progressByModel();
+      const chartRows = modelProgress.length === 0
+        ? `<div class="progress-chart-empty">No inspections yet</div>`
+        : modelProgress.map(m => `
+            <div class="progress-bar-row">
+              <div class="progress-bar-label">${m.label}</div>
+              <div class="progress-bar-track">
+                <div class="progress-bar-fill ${m.pct === 100 ? 'full' : ''}" style="width:${m.pct}%"></div>
+              </div>
+              <div class="progress-bar-value">${m.pct}%</div>
+            </div>
+          `).join('');
+
+      return `
+        <h1 class="page-title">Inspection dashboard</h1>
+        <p class="page-subtitle">Today &middot; Live overview</p>
+
+        <div class="progress-chart">
+          <div class="progress-chart-header">
+            <div class="progress-chart-title">Completion by model</div>
+            <div class="progress-chart-legend">
+              <span class="legend-item"><span class="legend-swatch done"></span>Done</span>
+              <span class="legend-item"><span class="legend-swatch remain"></span>Remaining</span>
+            </div>
+          </div>
+          ${chartRows}
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card clickable" data-action="kpi-nav" data-target="fill" data-filter="scheduled" role="button" tabindex="0">
+            <div class="kpi-value scheduled">${k.scheduled}</div>
+            <div class="kpi-label">Scheduled</div>
+          </div>
+          <div class="kpi-card clickable" data-action="kpi-nav" data-target="history" data-filter="completed" role="button" tabindex="0">
+            <div class="kpi-value completed">${k.completed}</div>
+            <div class="kpi-label">Completed</div>
+          </div>
+          <div class="kpi-card clickable" data-action="kpi-nav" data-target="fill" data-filter="in-progress" role="button" tabindex="0">
+            <div class="kpi-value in-progress">${k.inProgress}</div>
+            <div class="kpi-label">In progress</div>
+          </div>
+          <div class="kpi-card clickable" data-action="kpi-nav" data-target="fill" data-filter="overdue" role="button" tabindex="0">
+            <div class="kpi-value overdue">${k.overdue}</div>
+            <div class="kpi-label">Overdue</div>
+          </div>
+        </div>
+
+        <div class="section-label">New production plan</div>
+        <div class="card">
+          <div class="form-grid">
+            <div class="plan-header-grid">
+              <div class="form-field">
+                <label>Date</label>
+                <input type="date" value="${state.planForm.date}" data-field="date"
+                  class="${state.planForm.date ? '' : 'is-placeholder'}"
+                  placeholder="select…"
+                  onfocus="this.classList.remove('is-placeholder')">
+              </div>
+              <div class="form-field">
+                <label>Shift</label>
+                ${customDropdown('shift', ['A', 'B'], state.planForm.shift)}
+              </div>
+              <div class="form-field">
+                <label>Duty Supv</label>
+                ${customDropdown('supv', ['Bob', 'Raj'], state.planForm.supv)}
+              </div>
+              <div class="form-field">
+                <label>Line</label>
+                ${customDropdown('line', ['L1', 'L2'], state.planForm.line)}
+              </div>
+              <div class="form-field">
+                <label>Customer</label>
+                ${customDropdown('customer', ['OEM', 'HPC', 'ATS'], state.planForm.customer)}
+              </div>
+              <div class="form-field">
+                <label>Duty Leader</label>
+                ${customDropdown('leader', ['Angah', 'Oppa'], state.planForm.leader)}
+              </div>
+            </div>
+
+            <div class="section-sublabel">Models</div>
+            ${state.planForm.models.map((m, idx) => {
+              const rowPcs = (parseInt(m.lots) || 0) * m.sides.length * PCS_PER_LOT;
+              return `
+                <div class="model-row">
+                  ${state.planForm.models.length > 1 ? `
+                    <button class="model-remove-btn" data-action="remove-model" data-row-idx="${idx}" title="Remove model">&times;</button>
+                  ` : ''}
+                  <div class="model-row-inline">
+                    <div class="form-field">
+                      <label>Model</label>
+                      <select data-row-idx="${idx}" data-row-field="model">${modelDropdown(m.model)}</select>
+                    </div>
+                    <div class="form-field">
+                      <label>Lots</label>
+                      <input type="number" min="1" value="${m.lots}" data-row-idx="${idx}" data-row-field="lots">
+                    </div>
+                    <div class="form-field">
+                      <label>Sides</label>
+                      <div class="checkbox-group">
+                        <label class="checkbox-pill ${m.sides.includes('RH-L')?'checked':''}" data-row-idx="${idx}" data-side-pill="RH-L">RH-L</label>
+                        <label class="checkbox-pill ${m.sides.includes('RH-R')?'checked':''}" data-row-idx="${idx}" data-side-pill="RH-R">RH-R</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row-qty-display">
+                    <span>${m.lots || 0} lot &times; ${m.sides.length} side &times; ${PCS_PER_LOT} =</span>
+                    <span class="row-qty-value">${rowPcs} pcs</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+            <button class="add-model-btn" data-action="add-model">+ Add another model</button>
+
+            <div class="total-qty-display">
+              <div>
+                <div class="total-qty-label">Target qty (auto)</div>
+                <div class="total-qty-subtle">1 lot = ${PCS_PER_LOT} pcs per side</div>
+              </div>
+              <div class="total-qty-value">${totalQty} pcs</div>
+            </div>
+
+            <button class="btn btn-primary btn-block" data-action="add-plan">+ Add plan &amp; auto-generate inspections</button>
+          </div>
+        </div>
+
+        <div class="section-label">Active inspections</div>
+        <div class="insp-list-grid">
+        ${DB.inspections.map(ins => `
+          <div class="insp-card clickable" data-action="open-inspection" data-id="${ins.id}">
+            <div class="insp-bar ${statusClass(ins.status)}"></div>
+            <div class="insp-body">
+              <div class="insp-main">
+                <div class="insp-id-title">
+                  <span class="insp-id">${ins.id}</span>
+                  &middot;
+                  <span>${ins.model} ${ins.side}</span>
+                </div>
+                <div class="insp-meta">
+                  ${ins.line} &middot; ${ins.done}/${ins.total} items
+                  ${ins.result ? ` &middot; <span class="status-text ${statusClass(ins.status)}">${ins.result}</span>` : ''}
+                </div>
+              </div>
+              <div class="status-pill ${statusClass(ins.status)}">${ins.status}</div>
+            </div>
+          </div>
+        `).join('')}
+        </div>
+      `;
+    }
+
+    // =========================================================
+    // VIEW: FILL CHECK SHEET (list mode)
+    // =========================================================
+    function renderFillList() {
+      const activeStatuses = ['In Progress', 'Scheduled', 'Overdue'];
+      let active = DB.inspections.filter(i => activeStatuses.includes(i.status));
+      const filter = state.fillFilter;
+      if (filter !== 'all') {
+        active = active.filter(i => statusClass(i.status) === filter);
+      }
+      return `
+        <h1 class="page-title">Fill check sheet</h1>
+        <p class="page-subtitle">Pick an inspection to start or continue</p>
+
+        <div class="filter-row">
+          <button class="filter-pill ${filter==='all'?'active':''}" data-action="set-fill-filter" data-val="all">All</button>
+          <button class="filter-pill ${filter==='scheduled'?'active':''}" data-action="set-fill-filter" data-val="scheduled">Scheduled</button>
+          <button class="filter-pill ${filter==='in-progress'?'active':''}" data-action="set-fill-filter" data-val="in-progress">In progress</button>
+          <button class="filter-pill ${filter==='overdue'?'active':''}" data-action="set-fill-filter" data-val="overdue">Overdue</button>
+        </div>
+
+        ${active.length === 0 ? `
+          <div class="empty-state">
+            <div class="title">No inspections here</div>
+            <div class="desc">Try another filter, or create a production plan in the Dashboard tab.</div>
+          </div>
+        ` : `<div class="insp-list-grid">` + active.map(ins => `
+          <div class="insp-card clickable" data-action="open-inspection" data-id="${ins.id}">
+            <div class="insp-bar ${statusClass(ins.status)}"></div>
+            <div class="insp-body">
+              <div class="insp-main">
+                <div class="insp-id-title">
+                  <span class="insp-id">${ins.id}</span>
+                  &middot;
+                  <span>${ins.model} ${ins.side}</span>
+                </div>
+                <div class="insp-meta">
+                  ${ins.line} &middot; ${ins.done}/${ins.total} items
+                </div>
+              </div>
+              <div class="status-pill ${statusClass(ins.status)}">${ins.status}</div>
+            </div>
+          </div>
+        `).join('') + `</div>`}
+      `;
+    }
+
+    // =========================================================
+    // VIEW: FILL CHECK SHEET (detail mode)
+    // =========================================================
+    function renderFillDetail(inspId) {
+      const ins = getInspection(inspId);
+      if (!ins) return renderFillList();
+
+      // Group control items by process
+      const itemsByProcess = {};
+      DB.controlItems.forEach(ci => {
+        if (!itemsByProcess[ci.process_id]) itemsByProcess[ci.process_id] = [];
+        itemsByProcess[ci.process_id].push(ci);
+      });
+
+      const progress = Math.round((ins.done / ins.total) * 100);
+
+      const sections = Object.keys(itemsByProcess).map(pid => {
+        const proc = getProcess(pid);
+        const items = itemsByProcess[pid];
+        return `
+          <div class="section-label">${proc.process_id} &middot; ${proc.name.toUpperCase()}</div>
+          <div class="check-items-grid">
+          ${items.map(ci => {
+            const result = getResult(inspId, ci.ci_id);
+            const standard = getStandard(ci, ins.model);
+            const isPending = !result;
+            const judgement = result ? result.judgement : null;
+            const barClass = isPending ? 'pending' : (judgement === 'OK' ? 'ok' : 'ng');
+            const pillClass = isPending ? 'scheduled' : (judgement === 'OK' ? 'completed' : 'failed');
+            const pillText = isPending ? 'Pending' : judgement;
+
+            return `
+              <div class="check-item-card">
+                <div class="check-item-bar ${barClass}"></div>
+                <div class="check-item-body">
+                  <div class="check-item-top">
+                    <div class="check-item-name">${ci.name}</div>
+                    <div class="status-pill ${pillClass}">${pillText}</div>
+                  </div>
+                  <div class="check-item-standard">
+                    Standard: <span class="value">${standard}</span>
+                    ${ci.model_dependent ? `<span class="auto"> &middot; auto-set for ${ins.model}</span>` : ''}
+                  </div>
+                  <div class="check-item-controls ${ci.type === 'OK_NG' ? '' : 'single'}">
+                    <div class="control-readout">
+                      <div class="label">PIC</div>
+                      <div class="value">${result ? result.pic : '<span class="empty">Tap to assign</span>'}</div>
+                    </div>
+                    ${ci.type === 'NUMERIC' && !isPending ? `
+                      <div class="control-readout">
+                        <div class="label">Reading</div>
+                        <div class="value">${result.value} ${ci.unit || ''}</div>
+                      </div>
+                    ` : ''}
+                    ${ci.type === 'OK_NG' && isPending ? `
+                      <div class="ok-ng-buttons">
+                        <button data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-val="OK">OK</button>
+                        <button data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-val="NG">NG</button>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <button class="back-btn" data-action="back-to-fill-list">&larr; Back</button>
+
+        <div class="insp-header-card">
+          <div class="insp-header-top">
+            <div class="insp-header-id">${ins.id}</div>
+            <div class="status-pill ${statusClass(ins.status)}">${ins.status}</div>
+          </div>
+          <div class="insp-header-title">Door Mirror Job Setup &mdash; ${ins.model} ${ins.side}</div>
+          <div class="insp-header-meta">
+            <div><div class="label">Line / Shift</div><div class="value">${ins.line} / ${ins.shift}</div></div>
+            <div><div class="label">Leader</div><div class="value">${ins.leader}</div></div>
+            <div><div class="label">Progress</div><div class="value">${ins.done}/${ins.total}</div></div>
+            <div><div class="label">NG count</div><div class="value">${ins.ng}</div></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+        </div>
+
+        ${sections}
+
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="btn btn-block">Save draft</button>
+          <button class="btn btn-primary btn-block">Submit for QA</button>
+        </div>
+      `;
+    }
+
+    // =========================================================
+    // VIEW: HISTORY
+    // =========================================================
+    function renderHistory() {
+      const all = DB.inspections;
+      const filter = state.historyFilter;
+      const filtered = filter === 'all' ? all : all.filter(i => statusClass(i.status) === filter);
+
+      return `
+        <h1 class="page-title">History</h1>
+        <p class="page-subtitle">All inspections by date</p>
+
+        <div class="filter-row">
+          <button class="filter-pill ${filter==='all'?'active':''}" data-action="set-history-filter" data-val="all">All</button>
+          <button class="filter-pill ${filter==='completed'?'active':''}" data-action="set-history-filter" data-val="completed">Completed</button>
+          <button class="filter-pill ${filter==='failed'?'active':''}" data-action="set-history-filter" data-val="failed">Failed</button>
+          <button class="filter-pill ${filter==='in-progress'?'active':''}" data-action="set-history-filter" data-val="in-progress">In progress</button>
+        </div>
+
+        ${filtered.length === 0 ? `
+          <div class="empty-state">
+            <div class="title">No records</div>
+            <div class="desc">No inspections match this filter.</div>
+          </div>
+        ` : `<div class="insp-list-grid">` + filtered.map(ins => `
+          <div class="insp-card">
+            <div class="insp-bar ${statusClass(ins.status)}"></div>
+            <div class="insp-body">
+              <div class="insp-main">
+                <div class="insp-id-title">
+                  <span class="insp-id">${ins.id}</span>
+                  &middot;
+                  <span>${ins.model} ${ins.side}</span>
+                </div>
+                <div class="insp-meta">
+                  ${ins.line} &middot; 30 Jun
+                  ${ins.result ? ` &middot; <span class="status-text ${statusClass(ins.status)}">${ins.result}</span>` : ''}
+                </div>
+              </div>
+              <div class="status-pill ${statusClass(ins.status)}">${ins.status}</div>
+            </div>
+          </div>
+        `).join('') + `</div>`}
+      `;
+    }
+
+    // =========================================================
+    // ROUTER + RENDER
+    // =========================================================
+    function render() {
+      const main = document.getElementById('main');
+      if (state.currentTab === 'dashboard') {
+        main.innerHTML = renderDashboard();
+      } else if (state.currentTab === 'fill') {
+        main.innerHTML = state.selectedInspectionId
+          ? renderFillDetail(state.selectedInspectionId)
+          : renderFillList();
+      } else if (state.currentTab === 'history') {
+        main.innerHTML = renderHistory();
+      }
+      // Sync tab bar
+      document.querySelectorAll('.tab-bar button').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === state.currentTab);
+      });
+      window.scrollTo(0, 0);
+    }
+
+    // =========================================================
+    // EVENT HANDLERS (delegated)
+    // =========================================================
+    document.addEventListener('click', e => {
+      // ----- Custom dropdown: toggle open/close -----
+      const ddToggle = e.target.closest('[data-dd-toggle]');
+      if (ddToggle) {
+        e.stopPropagation();
+        const field = ddToggle.dataset.ddToggle;
+        const menu = document.querySelector(`[data-dd-menu="${field}"]`);
+        const isOpen = ddToggle.classList.contains('open');
+        // Close all other open dropdowns first
+        document.querySelectorAll('.dropdown-btn.open').forEach(b => {
+          b.classList.remove('open');
+          const m = b.nextElementSibling;
+          if (m) m.classList.remove('open');
+        });
+        // Toggle this one (if it wasn't already open)
+        if (!isOpen) {
+          ddToggle.classList.add('open');
+          if (menu) menu.classList.add('open');
+        }
+        return;
+      }
+
+      // ----- Custom dropdown: pick an option -----
+      const ddOption = e.target.closest('[data-dd-value]');
+      if (ddOption) {
+        e.stopPropagation();
+        const field = ddOption.dataset.ddField;
+        const value = ddOption.dataset.ddValue;
+        state.planForm[field] = value;
+        render();
+        return;
+      }
+
+      // ----- Click anywhere else: close any open dropdown -----
+      document.querySelectorAll('.dropdown-btn.open').forEach(b => {
+        b.classList.remove('open');
+        const m = b.nextElementSibling;
+        if (m) m.classList.remove('open');
+      });
+
+      // Tab switching
+      const tabBtn = e.target.closest('.tab-bar button');
+      if (tabBtn) {
+        state.currentTab = tabBtn.dataset.tab;
+        if (state.currentTab !== 'fill') state.selectedInspectionId = null;
+        render();
+        return;
+      }
+
+      // Find action target
+      const actionEl = e.target.closest('[data-action]');
+      if (!actionEl) return;
+      const action = actionEl.dataset.action;
+
+      if (action === 'kpi-nav') {
+        const target = actionEl.dataset.target;
+        const filter = actionEl.dataset.filter;
+        state.currentTab = target;
+        state.selectedInspectionId = null;
+        if (target === 'fill') state.fillFilter = filter;
+        if (target === 'history') state.historyFilter = filter;
+        render();
+      } else if (action === 'set-fill-filter') {
+        state.fillFilter = actionEl.dataset.val;
+        render();
+      } else if (action === 'open-inspection') {
+        state.selectedInspectionId = actionEl.dataset.id;
+        state.currentTab = 'fill';
+        render();
+      } else if (action === 'back-to-fill-list') {
+        state.selectedInspectionId = null;
+        render();
+      } else if (action === 'set-judgement') {
+        const inspId = actionEl.dataset.insp;
+        const ciId = actionEl.dataset.ci;
+        const val = actionEl.dataset.val;
+        const userName = DB.users[0].name;
+        DB.results[`${inspId}|${ciId}`] = { judgement: val, pic: userName };
+        // Update inspection progress
+        const ins = getInspection(inspId);
+        if (ins) {
+          ins.done = Math.min(ins.done + 1, ins.total);
+          if (val === 'NG') ins.ng++;
+          if (ins.status === 'Scheduled' || ins.status === 'Overdue') ins.status = 'In Progress';
+        }
+        render();
+      } else if (action === 'set-history-filter') {
+        state.historyFilter = actionEl.dataset.val;
+        render();
+      } else if (action === 'add-model') {
+        // Default new row: first model, 1 lot, both sides
+        state.planForm.models.push({
+          model: DB.models[0].model_code,
+          lots: 1,
+          sides: ['RH-L', 'RH-R']
+        });
+        render();
+      } else if (action === 'remove-model') {
+        const idx = parseInt(actionEl.dataset.rowIdx);
+        state.planForm.models.splice(idx, 1);
+        render();
+      } else if (action === 'add-plan') {
+        // Auto-generate inspections: 1 per (model, side) combo
+        const f = state.planForm;
+        const missing = [];
+        if (!f.date) missing.push('Date');
+        if (!f.line) missing.push('Line');
+        if (!f.shift) missing.push('Shift');
+        if (!f.customer) missing.push('Customer');
+        if (!f.supv) missing.push('Duty Supv');
+        if (!f.leader) missing.push('Duty Leader');
+        if (missing.length > 0) {
+          alert('Please fill: ' + missing.join(', '));
+          return;
+        }
+        const validModels = f.models.filter(m => m.sides.length > 0);
+        if (validModels.length === 0) {
+          alert('Pick at least one side for each model');
+          return;
+        }
+        let baseNum = DB.inspections.length + 1;
+        let created = 0;
+        validModels.forEach(m => {
+          m.sides.forEach(side => {
+            const newId = `INS-2026-${String(baseNum++).padStart(4, '0')}`;
+            DB.inspections.push({
+              id: newId, model: m.model, side: side,
+              line: `${f.line}-DM-A`, shift: f.shift,
+              leader: f.leader, status: 'Scheduled', result: '',
+              total: 24, done: 0, ng: 0
+            });
+            created++;
+          });
+        });
+        alert(`Created ${created} inspection(s) — ${validModels.length} model(s), ${calculateTotalQty()} pcs total`);
+        render();
+      }
+    });
+
+    // Form field changes (native inputs: Date + per-row Model/Lots)
+    document.addEventListener('change', e => {
+      // Global native field: Date (the 5 dropdowns are custom now, handled via click)
+      const field = e.target.dataset.field;
+      if (field) {
+        state.planForm[field] = e.target.value;
+        // Clear the grey placeholder styling now that a value is chosen
+        if (e.target.value) e.target.classList.remove('is-placeholder');
+        else e.target.classList.add('is-placeholder');
+        return;
+      }
+      // Per-row field: Model, Lots (inside model rows)
+      const rowIdxAttr = e.target.dataset.rowIdx;
+      const rowField = e.target.dataset.rowField;
+      if (rowIdxAttr !== undefined && rowField) {
+        const row = state.planForm.models[parseInt(rowIdxAttr)];
+        if (row) {
+          row[rowField] = rowField === 'lots'
+            ? Math.max(1, parseInt(e.target.value) || 1)
+            : e.target.value;
+          render();  // Re-render to update auto-qty display
+        }
+      }
+    });
+
+    // Side pill toggles (per model row)
+    document.addEventListener('click', e => {
+      const sidePill = e.target.closest('[data-side-pill]');
+      if (sidePill) {
+        const rowIdx = parseInt(sidePill.dataset.rowIdx);
+        const side = sidePill.dataset.sidePill;
+        const row = state.planForm.models[rowIdx];
+        if (row) {
+          const idx = row.sides.indexOf(side);
+          if (idx >= 0) row.sides.splice(idx, 1);
+          else row.sides.push(side);
+          render();
+        }
+      }
+    });
+
+    // =========================================================
+    // BOOT
+    // =========================================================
+    render();
+  </script>
+</body>
+</html>
