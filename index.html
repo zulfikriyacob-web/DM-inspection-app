@@ -934,10 +934,18 @@
 
   <script>
     // =========================================================
-    // MOCK DATA (mirrors Google Sheets structure)
-    // In production, this layer will be replaced by Google Sheets API calls.
+    // CONFIG — paste your Google Apps Script Web App URL here
+    // ---------------------------------------------------------
+    // Get this from: Apps Script → Deploy → Web app URL (ends with /exec)
+    // Leave it as '' to run in demo mode with the built-in sample data.
     // =========================================================
-    const DB = {
+    const SHEET_API_URL = '';  // e.g. 'https://script.google.com/macros/s/AKfy.../exec'
+
+    // =========================================================
+    // FALLBACK / DEMO DATA (used when SHEET_API_URL is empty).
+    // Once connected to Google Sheets, this is replaced at load time.
+    // =========================================================
+    let DB = {
       templates: [
         { template_id: 'TPL-001', code: 'PGE-GE-001-C', title: 'Door Mirror Job Set-Up Production',
           revision: 'C', line: 'L2 Door Mirror' }
@@ -985,7 +993,7 @@
         { ci_id: 'CI-0014', process_id: 'P03', name: 'Screw Box Location', type: 'TEXT', standard: 'Slot 1', unit: '', model_dependent: false, applicable_models: 'ALL' },
         { ci_id: 'CI-0015', process_id: 'P03', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', unit: '', model_dependent: false, applicable_models: 'ALL' },
         // P04,
-        { ci_id: 'CI-0016', process_id: 'P04', name: 'Tools Insert Condition', type: 'OK_NG', standard: 'Tools Surface Free From Sharp Edges', unit: '', model_dependent: false, applicable_models: 'T00-4DR,T00-5DR' },
+        { ci_id: 'CI-0016', process_id: 'P04', name: 'Tools Insert Condition', type: 'OK_NG', standard: 'Tools Surface Free From Sharp Edges', unit: '', model_dependent: false, applicable_models: 'ALL' },
         // P05,
         { ci_id: 'CI-0017', process_id: 'P05', name: 'Torque Driver Reading', type: 'NUMERIC', standard: 'See ModelSpecs', unit: 'Nm', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
         { ci_id: 'CI-0018', process_id: 'P05', name: 'Screw Type', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
@@ -2077,9 +2085,157 @@
     }
 
     // =========================================================
+    // DATA LOADING (Google Sheets via Apps Script)
+    // =========================================================
+
+    // Normalize a date/datetime value from the sheet to "YYYY-MM-DD"
+    function normalizeDate(v) {
+      if (!v) return '';
+      var s = String(v);
+      var m = s.match(/^(\d{4}-\d{2}-\d{2})/);   // ISO or "2026-06-30 08:00"
+      if (m) return m[1];
+      var d = new Date(s);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      return s;
+    }
+
+    // Format a ModelSpecs row into a display string (e.g. "3.9 ± 0.2 Nm")
+    function formatSpecValue(s) {
+      if (s.text_value !== '' && s.text_value != null) return String(s.text_value);
+      if (s.nominal_value !== '' && s.nominal_value != null) {
+        var nom = s.nominal_value, up = s.upper_tol, lo = s.lower_tol, unit = s.unit || '';
+        var hasUp = (up !== '' && up != null), hasLo = (lo !== '' && lo != null);
+        if (hasUp && hasLo) {
+          return (up === lo)
+            ? (nom + ' \u00B1 ' + up + ' ' + unit).trim()
+            : (nom + ' +' + up + '/-' + lo + ' ' + unit).trim();
+        }
+        return (nom + ' ' + unit).trim();
+      }
+      return '';
+    }
+
+    // Convert raw sheet rows into the app's internal DB shape
+    function transformSheetData(raw) {
+      var db = {};
+
+      db.templates = (raw.templates || []).map(function (t) {
+        return { template_id: t.template_id, code: t.code, title: t.title,
+                 revision: t.revision, line: t.line };
+      });
+
+      db.processes = (raw.processes || []).map(function (p) {
+        return { process_id: p.process_id, seq: Number(p.seq), name: p.process_name };
+      });
+
+      db.controlItems = (raw.controlItems || []).map(function (c) {
+        return {
+          ci_id: c.control_item_id,
+          process_id: c.process_id,
+          name: c.control_item,
+          type: c.judgement_type,
+          standard: c.standard_text || '',
+          unit: c.unit || '',
+          model_dependent: (c.model_dependent === true ||
+                            String(c.model_dependent).toUpperCase() === 'TRUE'),
+          applicable_models: (c.applicable_models ? String(c.applicable_models).trim() : 'ALL')
+        };
+      });
+
+      db.models = (raw.models || []).map(function (m) {
+        return { model_code: m.model_code, description: m.description };
+      });
+
+      db.modelSpecs = {};
+      (raw.modelSpecs || []).forEach(function (s) {
+        var val = formatSpecValue(s);
+        String(s.model_codes || '').split(',').forEach(function (code) {
+          code = code.trim();
+          if (code) db.modelSpecs[s.control_item_id + '|' + code] = { value: val };
+        });
+      });
+
+      db.users = (raw.users || []).map(function (u) {
+        return { user_id: u.user_id, name: u.full_name, role: u.role };
+      });
+
+      // Helper to resolve a user id → name
+      var userName = {};
+      db.users.forEach(function (u) { userName[u.user_id] = u.name; });
+
+      db.inspections = (raw.inspections || []).map(function (i) {
+        return {
+          id: i.inspection_id,
+          date: normalizeDate(i.scheduled_at || i.date || ''),
+          model: i.model_code,
+          side: i.side,
+          line: i.asset_line || i.line || '',
+          shift: i.shift,
+          leader: userName[i.operator_id] || i.leader || '',
+          status: i.status,
+          result: i.result || '',
+          total: Number(i.total_items) || 0,
+          done: Number(i.completed_items) || 0,
+          ng: Number(i.ng_count) || 0
+        };
+      });
+
+      db.results = {};
+      (raw.results || []).forEach(function (r) {
+        db.results[r.inspection_id + '|' + r.control_item_id] = {
+          judgement: r.judgement,
+          pic: r.recorded_by || '',
+          value: r.recorded_value || ''
+        };
+      });
+
+      return db;
+    }
+
+    // Show a simple loading screen in the main area
+    function showLoading(msg) {
+      document.getElementById('main').innerHTML =
+        '<div class="empty-state"><div class="title">' + (msg || 'Loading…') +
+        '</div><div class="desc">Please wait a moment.</div></div>';
+    }
+
+    // Show an error screen with a retry button
+    function showError(err) {
+      document.getElementById('main').innerHTML =
+        '<div class="empty-state">' +
+        '<div class="title">Couldn\'t load data</div>' +
+        '<div class="desc">' + String(err) + '</div>' +
+        '<button class="btn" style="margin-top:12px;" data-action="retry-load">Try again</button>' +
+        '</div>';
+    }
+
+    // Fetch data from Google Sheets (or use demo data if no URL set)
+    async function loadData() {
+      if (!SHEET_API_URL) {
+        render();  // demo mode — use built-in sample data
+        return;
+      }
+      showLoading('Loading data from Google Sheets…');
+      try {
+        const res = await fetch(SHEET_API_URL);
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Server returned an error');
+        DB = transformSheetData(json.data);
+        render();
+      } catch (err) {
+        showError(err);
+      }
+    }
+
+    // Retry button handler
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('[data-action="retry-load"]')) loadData();
+    });
+
+    // =========================================================
     // BOOT
     // =========================================================
-    render();
+    loadData();
   </script>
 </body>
 </html>
