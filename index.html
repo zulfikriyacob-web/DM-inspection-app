@@ -153,12 +153,16 @@
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .form-row { grid-template-columns: 1fr; }
       .plan-header-grid { grid-template-columns: 1fr 1fr; }
+      /* Model | Lots | Sides stay on ONE line; Model shrinks to fit */
       .model-row-inline {
-        grid-template-columns: 1fr 58px;
+        grid-template-columns: minmax(0, 1fr) 44px auto;
+        gap: 6px;
       }
-      .model-row-inline .form-field:last-child {
-        grid-column: 1 / -1;  /* Sides drop to own row, full width */
+      .model-row-inline .checkbox-pill {
+        padding: 6px 8px;
+        font-size: 11px;
       }
+      .model-row { padding: 12px 32px 12px 12px; }
       .insp-header-meta { grid-template-columns: repeat(2, 1fr); row-gap: 10px; }
     }
     /* Tablets and up: two-column layout for check item cards */
@@ -368,8 +372,19 @@
       background: var(--surface);
       color: var(--text);
       font-size: 14px;
+      box-sizing: border-box;
       transition: border-color 0.15s, box-shadow 0.15s;
     }
+    /* iOS renders date inputs taller and misaligned by default.
+       Normalize height so Date matches the dropdowns beside it. */
+    .form-field input[type="date"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 42px;
+      line-height: 1.2;
+      min-height: 42px;
+    }
+    .dropdown-btn { height: 42px; }
     .form-field input:focus, .form-field select:focus {
       outline: none;
       border-color: var(--accent);
@@ -919,7 +934,7 @@
         supv: '',
         leader: '',
         models: [
-          { model: 'T20', lots: 1, sides: ['RH-L', 'RH-R'] }
+          { model: '', lots: '', sides: ['RH-L', 'RH-R'] }
         ]
       }
     };
@@ -1002,12 +1017,29 @@
       `;
     }
 
+    // Row-aware custom dropdown for the model rows (Model field per row).
+    function customDropdownRow(idx, options, current) {
+      const isEmpty = !current;
+      const optionsHtml = options.map(opt => `
+        <div class="dropdown-option ${opt === current ? 'selected' : ''}"
+             data-ddrow-idx="${idx}" data-ddrow-value="${opt}">${opt}</div>
+      `).join('');
+      return `
+        <div class="dropdown">
+          <button type="button" class="dropdown-btn ${isEmpty ? 'is-placeholder' : ''}">
+            <span class="dropdown-label">${isEmpty ? 'select…' : current}</span>
+            <span class="dropdown-arrow">&#9662;</span>
+          </button>
+          <div class="dropdown-menu">
+            ${optionsHtml}
+          </div>
+        </div>
+      `;
+    }
+
     function renderDashboard() {
       const k = kpis();
       const totalQty = calculateTotalQty();
-      const modelDropdown = (selected) => DB.models.map(m =>
-        `<option ${m.model_code === selected ? 'selected' : ''}>${m.model_code}</option>`
-      ).join('');
 
       const modelProgress = progressByModel();
       const chartRows = modelProgress.length === 0
@@ -1100,11 +1132,13 @@
                   <div class="model-row-inline">
                     <div class="form-field">
                       <label>Model</label>
-                      <select data-row-idx="${idx}" data-row-field="model">${modelDropdown(m.model)}</select>
+                      ${customDropdownRow(idx, DB.models.map(mm => mm.model_code), m.model)}
                     </div>
                     <div class="form-field">
                       <label>Lots</label>
-                      <input type="number" min="1" value="${m.lots}" data-row-idx="${idx}" data-row-field="lots">
+                      <input type="number" min="1" value="${m.lots}" placeholder="No."
+                        class="${m.lots ? '' : 'is-placeholder'}"
+                        data-row-idx="${idx}" data-row-field="lots">
                     </div>
                     <div class="form-field">
                       <label>Sides</label>
@@ -1374,12 +1408,11 @@
     // EVENT HANDLERS (delegated)
     // =========================================================
     document.addEventListener('click', e => {
-      // ----- Custom dropdown: toggle open/close -----
-      const ddToggle = e.target.closest('[data-dd-toggle]');
+      // ----- Custom dropdown: toggle open/close (works for any .dropdown-btn) -----
+      const ddToggle = e.target.closest('.dropdown-btn');
       if (ddToggle) {
         e.stopPropagation();
-        const field = ddToggle.dataset.ddToggle;
-        const menu = document.querySelector(`[data-dd-menu="${field}"]`);
+        const menu = ddToggle.nextElementSibling;  // the menu is always the sibling
         const isOpen = ddToggle.classList.contains('open');
         // Close all other open dropdowns first
         document.querySelectorAll('.dropdown-btn.open').forEach(b => {
@@ -1395,7 +1428,7 @@
         return;
       }
 
-      // ----- Custom dropdown: pick an option -----
+      // ----- Custom dropdown: pick an option (header fields) -----
       const ddOption = e.target.closest('[data-dd-value]');
       if (ddOption) {
         e.stopPropagation();
@@ -1403,6 +1436,19 @@
         const value = ddOption.dataset.ddValue;
         state.planForm[field] = value;
         render();
+        return;
+      }
+
+      // ----- Custom dropdown: pick an option (model row) -----
+      const ddRowOption = e.target.closest('[data-ddrow-value]');
+      if (ddRowOption) {
+        e.stopPropagation();
+        const idx = parseInt(ddRowOption.dataset.ddrowIdx);
+        const value = ddRowOption.dataset.ddrowValue;
+        if (state.planForm.models[idx]) {
+          state.planForm.models[idx].model = value;
+          render();
+        }
         return;
       }
 
@@ -1463,10 +1509,10 @@
         state.historyFilter = actionEl.dataset.val;
         render();
       } else if (action === 'add-model') {
-        // Default new row: first model, 1 lot, both sides
+        // New row starts empty so placeholders show
         state.planForm.models.push({
-          model: DB.models[0].model_code,
-          lots: 1,
+          model: '',
+          lots: '',
           sides: ['RH-L', 'RH-R']
         });
         render();
@@ -1488,9 +1534,15 @@
           alert('Please fill: ' + missing.join(', '));
           return;
         }
-        const validModels = f.models.filter(m => m.sides.length > 0);
+        // Check each model row has model + lots + at least one side
+        const incomplete = f.models.some(m => !m.model || !m.lots || m.sides.length === 0);
+        if (incomplete) {
+          alert('For each model, pick a Model, enter Lots, and pick at least one side');
+          return;
+        }
+        const validModels = f.models.filter(m => m.model && m.lots && m.sides.length > 0);
         if (validModels.length === 0) {
-          alert('Pick at least one side for each model');
+          alert('Add at least one complete model row');
           return;
         }
         let baseNum = DB.inspections.length + 1;
@@ -1523,15 +1575,19 @@
         else e.target.classList.add('is-placeholder');
         return;
       }
-      // Per-row field: Model, Lots (inside model rows)
+      // Per-row field: Lots (inside model rows). Model is a custom dropdown now.
       const rowIdxAttr = e.target.dataset.rowIdx;
       const rowField = e.target.dataset.rowField;
       if (rowIdxAttr !== undefined && rowField) {
         const row = state.planForm.models[parseInt(rowIdxAttr)];
         if (row) {
-          row[rowField] = rowField === 'lots'
-            ? Math.max(1, parseInt(e.target.value) || 1)
-            : e.target.value;
+          if (rowField === 'lots') {
+            // Keep empty as empty (shows 'No.' placeholder); otherwise min 1
+            const v = e.target.value;
+            row.lots = v === '' ? '' : Math.max(1, parseInt(v) || 1);
+          } else {
+            row[rowField] = e.target.value;
+          }
           render();  // Re-render to update auto-qty display
         }
       }
