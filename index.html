@@ -596,14 +596,23 @@
       gap: 8px;
       align-items: end;
     }
-    .model-row-inline .form-field input,
-    .model-row-inline .form-field select {
+    /* Make Model dropdown, Lots input, and Sides all the same height (42px) */
+    .model-row-inline .form-field input {
+      height: 42px;
+      padding: 7px 10px;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    .model-row-inline .dropdown-btn {
+      height: 42px;
       padding: 7px 10px;
       font-size: 13px;
     }
     .model-row-inline .checkbox-group {
       flex-wrap: nowrap;
       gap: 6px;
+      height: 42px;
+      align-items: center;
     }
     .model-row-inline .checkbox-pill {
       padding: 6px 10px;
