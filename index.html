@@ -450,6 +450,120 @@
     }
 
     /* =========================================================
+       HISTORY SEARCH + FILTER TOOLBAR
+       ========================================================= */
+    .history-toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .search-box {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      color: var(--text-muted);
+      display: flex;
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      padding: 10px 12px 10px 36px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-clear {
+      position: absolute;
+      right: 8px;
+      width: 22px; height: 22px;
+      border: none;
+      background: var(--surface-2);
+      color: var(--text-secondary);
+      border-radius: 50%;
+      font-size: 15px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .filter-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .filter-toggle-btn.active {
+      background: var(--accent-bg);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+    .filter-badge {
+      background: var(--accent);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+    .advanced-filters {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .date-quick-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .date-range-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .date-range-row input[type="date"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+      height: 38px;
+    }
+
+    /* =========================================================
        CHECK SHEET DETAIL VIEW
        ========================================================= */
     .back-btn {
@@ -906,15 +1020,15 @@
         { user_id: 'USR-011', name: 'Nurul Huda', role: 'QA Inspector' }
       ],
       inspections: [
-        { id: 'INS-2026-0001', model: 'T20', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0001', date: '2026-06-28', model: 'T20', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
           leader: 'Ahmad Y.', status: 'Completed', result: 'PASSED', total: 24, done: 24, ng: 0 },
-        { id: 'INS-2026-0002', model: '3K6', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0002', date: '2026-06-30', model: '3K6', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
           leader: 'Ahmad Y.', status: 'In Progress', result: '', total: 22, done: 14, ng: 0 },
-        { id: 'INS-2026-0003', model: 'T00-4DR', side: 'RH-L', line: 'L2-DM-B', shift: 'B',
+        { id: 'INS-2026-0003', date: '2026-06-29', model: 'T00-4DR', side: 'RH-L', line: 'L2-DM-B', shift: 'B',
           leader: 'Raj K.', status: 'Failed', result: 'ACTION NEEDED', total: 25, done: 25, ng: 2 },
-        { id: 'INS-2026-0004', model: '3M0', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0004', date: '2026-06-30', model: '3M0', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
           leader: 'Ahmad Y.', status: 'Scheduled', result: '', total: 24, done: 0, ng: 0 },
-        { id: 'INS-2026-0005', model: '3A0', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0005', date: '2026-06-27', model: '3A0', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
           leader: 'Ahmad Y.', status: 'Overdue', result: '', total: 24, done: 0, ng: 0 }
       ],
       // Pre-filled sample results for INS-2026-0002 (in progress) for the demo view
@@ -934,6 +1048,10 @@
       currentTab: 'dashboard',
       selectedInspectionId: null,  // for Fill Check Sheet detail view
       historyFilter: 'all',
+      historySearch: '',
+      historyDateFrom: '',
+      historyDateTo: '',
+      historyFiltersOpen: false,
       fillFilter: 'all',
       planForm: {
         date: '',
@@ -1349,26 +1467,104 @@
     // =========================================================
     // VIEW: HISTORY
     // =========================================================
+    // Format an ISO date (2026-06-30) as "30 Jun" for display
+    function fmtDate(iso) {
+      if (!iso) return '';
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const [y, m, d] = iso.split('-');
+      return `${parseInt(d)} ${months[parseInt(m) - 1]}`;
+    }
+
+    // Apply ALL active History filters (search + date range + status) together
+    function filteredHistory() {
+      let list = DB.inspections.slice();
+      const q = state.historySearch.trim().toLowerCase();
+      if (q) {
+        list = list.filter(i =>
+          i.id.toLowerCase().includes(q) ||
+          i.model.toLowerCase().includes(q) ||
+          i.side.toLowerCase().includes(q) ||
+          i.line.toLowerCase().includes(q) ||
+          (i.leader || '').toLowerCase().includes(q)
+        );
+      }
+      if (state.historyDateFrom) list = list.filter(i => i.date && i.date >= state.historyDateFrom);
+      if (state.historyDateTo)   list = list.filter(i => i.date && i.date <= state.historyDateTo);
+      if (state.historyFilter !== 'all') {
+        list = list.filter(i => statusClass(i.status) === state.historyFilter);
+      }
+      return list;
+    }
+
     function renderHistory() {
-      const all = DB.inspections;
+      const filtered = filteredHistory();
       const filter = state.historyFilter;
-      const filtered = filter === 'all' ? all : all.filter(i => statusClass(i.status) === filter);
+      const open = state.historyFiltersOpen;
+
+      // Count how many advanced filters are active (for the badge)
+      const activeCount =
+        (state.historySearch ? 1 : 0) +
+        (state.historyDateFrom ? 1 : 0) +
+        (state.historyDateTo ? 1 : 0);
 
       return `
         <h1 class="page-title">History</h1>
-        <p class="page-subtitle">All inspections by date</p>
+        <p class="page-subtitle">${filtered.length} of ${DB.inspections.length} inspections</p>
+
+        <div class="history-toolbar">
+          <div class="search-box">
+            <span class="search-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input type="text" class="search-input" placeholder="Search ID, model, line, leader…"
+              value="${state.historySearch}" data-history-search>
+            ${state.historySearch ? `<button class="search-clear" data-action="history-clear-search" title="Clear">&times;</button>` : ''}
+          </div>
+          <button class="filter-toggle-btn ${open ? 'active' : ''}" data-action="toggle-history-filters">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            Filters${activeCount ? ` <span class="filter-badge">${activeCount}</span>` : ''}
+          </button>
+        </div>
+
+        ${open ? `
+          <div class="advanced-filters">
+            <div class="date-quick-row">
+              <button class="filter-pill" data-action="history-quick-date" data-val="today">Today</button>
+              <button class="filter-pill" data-action="history-quick-date" data-val="week">Last 7 days</button>
+              <button class="filter-pill" data-action="history-quick-date" data-val="month">This month</button>
+              <button class="filter-pill" data-action="history-quick-date" data-val="clear">Clear dates</button>
+            </div>
+            <div class="date-range-row">
+              <div class="form-field">
+                <label>From</label>
+                <input type="date" value="${state.historyDateFrom}" data-history-datefrom
+                  class="${state.historyDateFrom ? '' : 'is-placeholder'}">
+              </div>
+              <div class="form-field">
+                <label>To</label>
+                <input type="date" value="${state.historyDateTo}" data-history-dateto
+                  class="${state.historyDateTo ? '' : 'is-placeholder'}">
+              </div>
+            </div>
+          </div>
+        ` : ''}
 
         <div class="filter-row">
           <button class="filter-pill ${filter==='all'?'active':''}" data-action="set-history-filter" data-val="all">All</button>
           <button class="filter-pill ${filter==='completed'?'active':''}" data-action="set-history-filter" data-val="completed">Completed</button>
           <button class="filter-pill ${filter==='failed'?'active':''}" data-action="set-history-filter" data-val="failed">Failed</button>
           <button class="filter-pill ${filter==='in-progress'?'active':''}" data-action="set-history-filter" data-val="in-progress">In progress</button>
+          <button class="filter-pill ${filter==='scheduled'?'active':''}" data-action="set-history-filter" data-val="scheduled">Scheduled</button>
+          <button class="filter-pill ${filter==='overdue'?'active':''}" data-action="set-history-filter" data-val="overdue">Overdue</button>
         </div>
 
         ${filtered.length === 0 ? `
           <div class="empty-state">
-            <div class="title">No records</div>
-            <div class="desc">No inspections match this filter.</div>
+            <div class="title">No records found</div>
+            <div class="desc">Try adjusting your search or filters.</div>
+            ${activeCount || state.historyFilter !== 'all' || state.historySearch ? `
+              <button class="btn" style="margin-top:12px;" data-action="history-reset-all">Reset all filters</button>
+            ` : ''}
           </div>
         ` : `<div class="insp-list-grid">` + filtered.map(ins => `
           <div class="insp-card">
@@ -1381,7 +1577,7 @@
                   <span>${ins.model} ${ins.side}</span>
                 </div>
                 <div class="insp-meta">
-                  ${ins.line} &middot; 30 Jun
+                  ${ins.line} &middot; ${fmtDate(ins.date)}
                   ${ins.result ? ` &middot; <span class="status-text ${statusClass(ins.status)}">${ins.result}</span>` : ''}
                 </div>
               </div>
@@ -1517,6 +1713,39 @@
       } else if (action === 'set-history-filter') {
         state.historyFilter = actionEl.dataset.val;
         render();
+      } else if (action === 'toggle-history-filters') {
+        state.historyFiltersOpen = !state.historyFiltersOpen;
+        render();
+      } else if (action === 'history-clear-search') {
+        state.historySearch = '';
+        render();
+      } else if (action === 'history-quick-date') {
+        const val = actionEl.dataset.val;
+        // "Today" is based on the app's demo date. In production this uses the real today.
+        const today = '2026-06-30';
+        const d = new Date(today);
+        if (val === 'today') {
+          state.historyDateFrom = today;
+          state.historyDateTo = today;
+        } else if (val === 'week') {
+          const from = new Date(d);
+          from.setDate(d.getDate() - 6);
+          state.historyDateFrom = from.toISOString().slice(0, 10);
+          state.historyDateTo = today;
+        } else if (val === 'month') {
+          state.historyDateFrom = today.slice(0, 8) + '01';
+          state.historyDateTo = today;
+        } else if (val === 'clear') {
+          state.historyDateFrom = '';
+          state.historyDateTo = '';
+        }
+        render();
+      } else if (action === 'history-reset-all') {
+        state.historySearch = '';
+        state.historyDateFrom = '';
+        state.historyDateTo = '';
+        state.historyFilter = 'all';
+        render();
       } else if (action === 'add-model') {
         // New row starts empty so placeholders show
         state.planForm.models.push({
@@ -1560,7 +1789,7 @@
           m.sides.forEach(side => {
             const newId = `INS-2026-${String(baseNum++).padStart(4, '0')}`;
             DB.inspections.push({
-              id: newId, model: m.model, side: side,
+              id: newId, date: f.date, model: m.model, side: side,
               line: `${f.line}-DM-A`, shift: f.shift,
               leader: f.leader, status: 'Scheduled', result: '',
               total: 24, done: 0, ng: 0
@@ -1575,6 +1804,17 @@
 
     // Form field changes (native inputs: Date + per-row Model/Lots)
     document.addEventListener('change', e => {
+      // History date range filters
+      if (e.target.hasAttribute('data-history-datefrom')) {
+        state.historyDateFrom = e.target.value;
+        render();
+        return;
+      }
+      if (e.target.hasAttribute('data-history-dateto')) {
+        state.historyDateTo = e.target.value;
+        render();
+        return;
+      }
       // Global native field: Date (the 5 dropdowns are custom now, handled via click)
       const field = e.target.dataset.field;
       if (field) {
@@ -1617,6 +1857,71 @@
         }
       }
     });
+
+    // Live search in History — update the list as the user types.
+    // We deliberately DON'T call the full render() here, because re-rendering
+    // the whole page would recreate the input and lose focus / cursor position.
+    document.addEventListener('input', e => {
+      if (e.target.hasAttribute('data-history-search')) {
+        state.historySearch = e.target.value;
+        renderHistoryResults();
+      }
+    });
+
+    // Re-render only the results grid + subtitle (used by live search)
+    function renderHistoryResults() {
+      const main = document.getElementById('main');
+      const subtitle = main.querySelector('.page-subtitle');
+      const filtered = filteredHistory();
+
+      if (subtitle) subtitle.textContent = `${filtered.length} of ${DB.inspections.length} inspections`;
+
+      const cardsHtml = filtered.map(ins => `
+        <div class="insp-card">
+          <div class="insp-bar ${statusClass(ins.status)}"></div>
+          <div class="insp-body">
+            <div class="insp-main">
+              <div class="insp-id-title">
+                <span class="insp-id">${ins.id}</span>
+                &middot;
+                <span>${ins.model} ${ins.side}</span>
+              </div>
+              <div class="insp-meta">
+                ${ins.line} &middot; ${fmtDate(ins.date)}
+                ${ins.result ? ` &middot; <span class="status-text ${statusClass(ins.status)}">${ins.result}</span>` : ''}
+              </div>
+            </div>
+            <div class="status-pill ${statusClass(ins.status)}">${ins.status}</div>
+          </div>
+        </div>
+      `).join('');
+
+      // Toggle the clear (×) button
+      const searchBox = main.querySelector('.search-box');
+      const clearBtn = searchBox ? searchBox.querySelector('.search-clear') : null;
+      if (searchBox && state.historySearch && !clearBtn) {
+        searchBox.insertAdjacentHTML('beforeend',
+          `<button class="search-clear" data-action="history-clear-search" title="Clear">&times;</button>`);
+      } else if (clearBtn && !state.historySearch) {
+        clearBtn.remove();
+      }
+
+      // Swap results area between grid and empty-state
+      const grid = main.querySelector('.insp-list-grid');
+      const empty = main.querySelector('.empty-state');
+      if (filtered.length === 0) {
+        const emptyHtml = `
+          <div class="empty-state">
+            <div class="title">No records found</div>
+            <div class="desc">Try adjusting your search or filters.</div>
+            <button class="btn" style="margin-top:12px;" data-action="history-reset-all">Reset all filters</button>
+          </div>`;
+        if (grid) grid.outerHTML = emptyHtml;
+      } else {
+        if (grid) grid.innerHTML = cardsHtml;
+        else if (empty) empty.outerHTML = `<div class="insp-list-grid">${cardsHtml}</div>`;
+      }
+    }
 
     // =========================================================
     // BOOT
