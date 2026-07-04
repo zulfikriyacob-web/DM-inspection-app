@@ -2019,7 +2019,6 @@
         state.planForm.models.splice(idx, 1);
         render();
       } else if (action === 'add-plan') {
-        // Auto-generate inspections: 1 per (model, side) combo
         const f = state.planForm;
         const missing = [];
         if (!f.date) missing.push('Date');
@@ -2032,7 +2031,6 @@
           alert('Please fill: ' + missing.join(', '));
           return;
         }
-        // Check each model row has model + lots + at least one side
         const incomplete = f.models.some(m => !m.model || !m.lots || m.sides.length === 0);
         if (incomplete) {
           alert('For each model, pick a Model, enter Lots, and pick at least one side');
@@ -2043,22 +2041,30 @@
           alert('Add at least one complete model row');
           return;
         }
-        let baseNum = DB.inspections.length + 1;
-        let created = 0;
-        validModels.forEach(m => {
-          m.sides.forEach(side => {
-            const newId = `INS-2026-${String(baseNum++).padStart(4, '0')}`;
-            DB.inspections.push({
-              id: newId, date: f.date, model: m.model, side: side,
-              line: `${f.line}-DM-A`, shift: f.shift,
-              leader: f.leader, status: 'Scheduled', result: '',
-              total: 24, done: 0, ng: 0
+
+        if (SHEET_API_URL) {
+          // CONNECTED: save to Google Sheets so data persists after refresh
+          savePlan(f, validModels);
+        } else {
+          // DEMO MODE: create locally (won't survive refresh)
+          let baseNum = DB.inspections.length + 1;
+          let created = 0;
+          validModels.forEach(m => {
+            m.sides.forEach(side => {
+              const newId = `INS-2026-${String(baseNum++).padStart(4, '0')}`;
+              DB.inspections.push({
+                id: newId, date: f.date, model: m.model, side: side,
+                line: `${f.line}-DM-${f.shift}`, shift: f.shift,
+                leader: f.leader, status: 'Scheduled', result: '',
+                total: 0, done: 0, ng: 0
+              });
+              created++;
             });
-            created++;
           });
-        });
-        alert(`Created ${created} inspection(s) — ${validModels.length} model(s), ${calculateTotalQty()} pcs total`);
-        render();
+          state.dashboardDate = f.date;
+          alert(`Demo mode: created ${created} inspection(s) locally.\n(Connect Google Sheets to save permanently.)`);
+          render();
+        }
       }
     });
 
@@ -2345,6 +2351,48 @@
         if (!json.ok) throw new Error(json.error || 'Server returned an error');
         DB = transformSheetData(json.data);
         render();
+      } catch (err) {
+        showError(err);
+      }
+    }
+
+    // Save a production plan (+ generate inspections) to Google Sheets
+    async function savePlan(f, validModels) {
+      const planDate = f.date;
+      showLoading('Saving plan to Google Sheets…');
+      try {
+        // Note: no custom Content-Type header — this keeps it a "simple" request
+        // so the browser doesn't block it with a CORS preflight.
+        const res = await fetch(SHEET_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'addPlan',
+            plan: {
+              date: f.date, line: f.line, shift: f.shift,
+              customer: f.customer, supv: f.supv, leader: f.leader
+            },
+            models: validModels.map(m => ({
+              model: m.model, lots: m.lots, sides: m.sides
+            })),
+            pcsPerLot: PCS_PER_LOT
+          })
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Save failed');
+
+        // Reset the form for the next entry
+        state.planForm = {
+          date: '', line: '', shift: '', customer: '', supv: '', leader: '',
+          models: [{ model: '', lots: '', sides: ['RH-L', 'RH-R'] }]
+        };
+        // Jump the dashboard to the plan's date so the new inspections show
+        state.dashboardDate = planDate;
+
+        // Reload fresh data from the sheet (now persisted)
+        await loadData();
+
+        const n = json.created ? json.created.length : 0;
+        alert('Plan saved! ' + n + ' inspection(s) created and stored in Google Sheets.');
       } catch (err) {
         showError(err);
       }
