@@ -734,6 +734,79 @@
     }
 
     /* =========================================================
+       CHECK SHEET — PER-PROCESS SAVE UI
+       ========================================================= */
+    .fill-hint {
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--accent-bg);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      margin-bottom: 14px;
+    }
+    .proc-section { margin-bottom: 18px; }
+    .proc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .proc-title {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.06em;
+    }
+    .proc-header-right { display: flex; align-items: center; gap: 10px; }
+    .proc-count {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted);
+    }
+    .proc-count.done { color: var(--success-text); }
+    .proc-save-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-strong);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-size: 12px; font-weight: 600;
+    }
+    .proc-save-btn.active {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .proc-save-btn.saved {
+      background: var(--success-bg); color: var(--success-text);
+      border-color: var(--success);
+    }
+    .proc-save-btn:disabled { cursor: default; }
+    .proc-pic-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .proc-pic-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .proc-pic-row .dropdown { flex: 1; max-width: 220px; }
+    .check-item-fill { margin-top: 4px; }
+    .item-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      font-size: 13px; font-family: inherit;
+      box-sizing: border-box;
+      margin-bottom: 6px;
+    }
+    .item-input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-bg);
+    }
+    .item-input.wide { margin-bottom: 0; }
+
+    /* =========================================================
        EMPTY STATE & UTILITIES
        ========================================================= */
     .empty-state {
@@ -1246,6 +1319,9 @@
       currentTab: 'dashboard',
       selectedInspectionId: null,  // for Fill Check Sheet detail view
       dashboardDate: todayISO(),   // date being viewed on the dashboard (default: today)
+      processPIC: {},              // keyed "inspId|processId" → PIC name for that process
+      dirtyProcesses: {},          // keyed "inspId|processId" → true if unsaved changes
+      savingProcess: null,         // "inspId|processId" currently being saved
       historyFilter: 'all',
       historySearch: '',
       historyDateFrom: '',
@@ -1644,52 +1720,100 @@
       const sections = orderedPids.map(pid => {
         const proc = getProcess(pid);
         const items = itemsByProcess[pid];
-        return `
-          <div class="section-label">${proc.process_id} &middot; ${proc.name.toUpperCase()}</div>
-          <div class="check-items-grid">
-          ${items.map(ci => {
-            const result = getResult(inspId, ci.ci_id);
-            const standard = getStandard(ci, ins.model);
-            const isPending = !result;
-            const judgement = result ? result.judgement : null;
-            const barClass = isPending ? 'pending' : (judgement === 'OK' ? 'ok' : 'ng');
-            const pillClass = isPending ? 'scheduled' : (judgement === 'OK' ? 'completed' : 'failed');
-            const pillText = isPending ? 'Pending' : judgement;
+        const procKey = `${inspId}|${pid}`;
 
-            return `
-              <div class="check-item-card">
-                <div class="check-item-bar ${barClass}"></div>
-                <div class="check-item-body">
-                  <div class="check-item-top">
-                    <div class="check-item-name">${ci.name}</div>
-                    <div class="status-pill ${pillClass}">${pillText}</div>
-                  </div>
-                  <div class="check-item-standard">
-                    Standard: <span class="value">${standard}</span>
-                    ${ci.model_dependent ? `<span class="auto"> &middot; auto-set for ${ins.model}</span>` : ''}
-                  </div>
-                  <div class="check-item-controls ${ci.type === 'OK_NG' ? '' : 'single'}">
-                    <div class="control-readout">
-                      <div class="label">PIC</div>
-                      <div class="value">${result ? result.pic : '<span class="empty">Tap to assign</span>'}</div>
+        // How many items in this process are filled (have a judgement)?
+        const filledCount = items.filter(ci => {
+          const r = getResult(inspId, ci.ci_id);
+          return r && r.judgement;
+        }).length;
+        const allFilled = filledCount === items.length;
+        const pic = state.processPIC[procKey] || '';
+        const dirty = state.dirtyProcesses[procKey];
+        const saving = state.savingProcess === procKey;
+
+        // Save button state
+        let saveBtn;
+        if (saving) {
+          saveBtn = `<button class="proc-save-btn" disabled>Saving…</button>`;
+        } else if (!allFilled || !pic) {
+          saveBtn = `<button class="proc-save-btn" disabled>Save</button>`;
+        } else if (dirty) {
+          saveBtn = `<button class="proc-save-btn active" data-action="save-process" data-insp="${inspId}" data-proc="${pid}">Save ${pid}</button>`;
+        } else {
+          saveBtn = `<button class="proc-save-btn saved" disabled>&#10003; Saved</button>`;
+        }
+
+        return `
+          <div class="proc-section">
+            <div class="proc-header">
+              <div class="proc-title">${proc.process_id} &middot; ${proc.name.toUpperCase()}</div>
+              <div class="proc-header-right">
+                <span class="proc-count ${allFilled ? 'done' : ''}">${filledCount}/${items.length}</span>
+                ${saveBtn}
+              </div>
+            </div>
+            <div class="proc-pic-row">
+              <span class="proc-pic-label">PIC</span>
+              ${picDropdown(procKey, pic)}
+            </div>
+            <div class="check-items-grid">
+            ${items.map(ci => {
+              const result = getResult(inspId, ci.ci_id);
+              const standard = getStandard(ci, ins.model);
+              const judged = result && result.judgement;
+              const barClass = !judged ? 'pending' : (result.judgement === 'OK' ? 'ok' : 'ng');
+              const pillClass = !judged ? 'scheduled' : (result.judgement === 'OK' ? 'completed' : 'failed');
+              const pillText = !judged ? 'Pending' : result.judgement;
+
+              // Build the fill controls based on item type
+              let controls = '';
+              if (ci.type === 'NUMERIC') {
+                controls = `
+                  <input type="number" step="any" class="item-input" placeholder="reading"
+                    value="${result && result.value != null ? result.value : ''}"
+                    data-num-insp="${inspId}" data-num-ci="${ci.ci_id}" data-proc="${pid}">
+                  <div class="ok-ng-buttons">
+                    <button class="${judged && result.judgement==='OK' ? 'selected ok' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="OK">OK</button>
+                    <button class="${judged && result.judgement==='NG' ? 'selected ng' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="NG">NG</button>
+                  </div>`;
+              } else if (ci.type === 'TEXT') {
+                controls = `
+                  <input type="text" class="item-input wide" placeholder="enter value"
+                    value="${result && result.text != null ? result.text : ''}"
+                    data-text-insp="${inspId}" data-text-ci="${ci.ci_id}" data-proc="${pid}">`;
+              } else if (ci.type === 'DETECT') {
+                controls = `
+                  <div class="ok-ng-buttons">
+                    <button class="${judged && result.judgement==='OK' ? 'selected ok' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="OK">Detect</button>
+                    <button class="${judged && result.judgement==='NG' ? 'selected ng' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="NG">Not Detect</button>
+                  </div>`;
+              } else { // OK_NG
+                controls = `
+                  <div class="ok-ng-buttons">
+                    <button class="${judged && result.judgement==='OK' ? 'selected ok' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="OK">OK</button>
+                    <button class="${judged && result.judgement==='NG' ? 'selected ng' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="NG">NG</button>
+                  </div>`;
+              }
+
+              return `
+                <div class="check-item-card">
+                  <div class="check-item-bar ${barClass}"></div>
+                  <div class="check-item-body">
+                    <div class="check-item-top">
+                      <div class="check-item-name">${ci.name}</div>
+                      <div class="status-pill ${pillClass}">${pillText}</div>
                     </div>
-                    ${ci.type === 'NUMERIC' && !isPending ? `
-                      <div class="control-readout">
-                        <div class="label">Reading</div>
-                        <div class="value">${result.value} ${ci.unit || ''}</div>
-                      </div>
-                    ` : ''}
-                    ${ci.type === 'OK_NG' && isPending ? `
-                      <div class="ok-ng-buttons">
-                        <button data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-val="OK">OK</button>
-                        <button data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-val="NG">NG</button>
-                      </div>
-                    ` : ''}
+                    <div class="check-item-standard">
+                      Standard: <span class="value">${standard}</span>
+                      ${ci.model_dependent ? `<span class="auto"> &middot; auto-set for ${ins.model}</span>` : ''}
+                    </div>
+                    <div class="check-item-fill">${controls}</div>
                   </div>
                 </div>
-              </div>
-            `;
-          }).join('')}
+              `;
+            }).join('')}
+            </div>
           </div>
         `;
       }).join('');
@@ -1714,13 +1838,27 @@
           <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
         </div>
 
-        ${sections}
+        <div class="fill-hint">Fill every item in a process, pick a PIC, then tap <strong>Save</strong> for that process.</div>
 
-        <div style="display:flex; gap:8px; margin-top:16px;">
-          <button class="btn btn-block">Save draft</button>
-          <button class="btn btn-primary btn-block">Submit for QA</button>
-        </div>
+        ${sections}
       `;
+    }
+
+    // Build a PIC dropdown for a process (reuses the custom-dropdown styles)
+    function picDropdown(procKey, current) {
+      const isEmpty = !current;
+      const opts = DB.users.map(u => `
+        <div class="dropdown-option ${u.name === current ? 'selected' : ''}"
+             data-pic-proc="${procKey}" data-pic-value="${u.name}">${u.name}</div>
+      `).join('');
+      return `
+        <div class="dropdown">
+          <button type="button" class="dropdown-btn ${isEmpty ? 'is-placeholder' : ''}">
+            <span class="dropdown-label">${isEmpty ? 'select PIC…' : current}</span>
+            <span class="dropdown-arrow">&#9662;</span>
+          </button>
+          <div class="dropdown-menu">${opts}</div>
+        </div>`;
     }
 
     // =========================================================
@@ -1916,6 +2054,26 @@
         return;
       }
 
+      // ----- Custom dropdown: pick a PIC (process) -----
+      const picOption = e.target.closest('[data-pic-value]');
+      if (picOption) {
+        e.stopPropagation();
+        const procKey = picOption.dataset.picProc;
+        const value = picOption.dataset.picValue;
+        state.processPIC[procKey] = value;
+        // Apply this PIC to all already-filled items in the process, and mark dirty
+        state.dirtyProcesses[procKey] = true;
+        const [inspId, pid] = procKey.split('|');
+        DB.controlItems.forEach(ci => {
+          if (ci.process_id === pid) {
+            const r = DB.results[`${inspId}|${ci.ci_id}`];
+            if (r) r.pic = value;
+          }
+        });
+        render();
+        return;
+      }
+
       // ----- Click anywhere else: close any open dropdown -----
       document.querySelectorAll('.dropdown-btn.open').forEach(b => {
         b.classList.remove('open');
@@ -1961,17 +2119,23 @@
       } else if (action === 'set-judgement') {
         const inspId = actionEl.dataset.insp;
         const ciId = actionEl.dataset.ci;
+        const pid = actionEl.dataset.proc;
         const val = actionEl.dataset.val;
-        const userName = DB.users[0].name;
-        DB.results[`${inspId}|${ciId}`] = { judgement: val, pic: userName };
-        // Update inspection progress
-        const ins = getInspection(inspId);
-        if (ins) {
-          ins.done = Math.min(ins.done + 1, ins.total);
-          if (val === 'NG') ins.ng++;
-          if (ins.status === 'Scheduled' || ins.status === 'Overdue') ins.status = 'In Progress';
-        }
+        const key = `${inspId}|${ciId}`;
+        const existing = DB.results[key] || {};
+        DB.results[key] = {
+          judgement: val,
+          value: existing.value != null ? existing.value : '',
+          text: existing.text != null ? existing.text : '',
+          pic: state.processPIC[`${inspId}|${pid}`] || ''
+        };
+        // Mark this process as having unsaved changes
+        state.dirtyProcesses[`${inspId}|${pid}`] = true;
         render();
+      } else if (action === 'save-process') {
+        const inspId = actionEl.dataset.insp;
+        const pid = actionEl.dataset.proc;
+        saveProcess(inspId, pid);
       } else if (action === 'set-history-filter') {
         state.historyFilter = actionEl.dataset.val;
         render();
@@ -2139,8 +2303,46 @@
       if (e.target.hasAttribute('data-history-search')) {
         state.historySearch = e.target.value;
         renderHistoryResults();
+        return;
+      }
+      // Check-sheet NUMERIC reading — store value, don't re-render (keep cursor)
+      if (e.target.hasAttribute('data-num-ci')) {
+        const inspId = e.target.dataset.numInsp;
+        const ciId = e.target.dataset.numCi;
+        const pid = e.target.dataset.proc;
+        const key = `${inspId}|${ciId}`;
+        const r = DB.results[key] || {};
+        r.value = e.target.value;
+        DB.results[key] = r;
+        state.dirtyProcesses[`${inspId}|${pid}`] = true;
+        return;
+      }
+      // Check-sheet TEXT value — filling text counts as OK (filled)
+      if (e.target.hasAttribute('data-text-ci')) {
+        const inspId = e.target.dataset.textInsp;
+        const ciId = e.target.dataset.textCi;
+        const pid = e.target.dataset.proc;
+        const key = `${inspId}|${ciId}`;
+        const val = e.target.value;
+        const r = DB.results[key] || {};
+        r.text = val;
+        r.judgement = val.trim() ? 'OK' : '';   // non-empty text = filled/OK
+        r.pic = state.processPIC[`${inspId}|${pid}`] || r.pic || '';
+        DB.results[key] = r;
+        state.dirtyProcesses[`${inspId}|${pid}`] = true;
+        // Update just the count/save-button area without stealing focus:
+        // a light refresh of the section header would be ideal, but to keep it
+        // simple we defer the visual update until the next full render (e.g. on blur).
+        return;
       }
     });
+
+    // When a text field loses focus, refresh so the Save button updates
+    document.addEventListener('blur', e => {
+      if (e.target.hasAttribute && e.target.hasAttribute('data-text-ci')) {
+        if (state.currentTab === 'fill' && state.selectedInspectionId) render();
+      }
+    }, true);
 
     // Re-render only the results grid + subtitle (used by live search)
     function renderHistoryResults() {
@@ -2356,6 +2558,61 @@
         render();
       } catch (err) {
         showError(err);
+      }
+    }
+
+    // Save all results for ONE process to Google Sheets
+    async function saveProcess(inspId, pid) {
+      const ins = getInspection(inspId);
+      if (!ins) return;
+      const procKey = `${inspId}|${pid}`;
+      const pic = state.processPIC[procKey] || '';
+
+      // Gather this process's applicable items + their results
+      const items = DB.controlItems.filter(ci =>
+        ci.process_id === pid && isApplicable(ci, ins.model));
+      const results = items.map(ci => {
+        const r = DB.results[`${inspId}|${ci.ci_id}`] || {};
+        return {
+          ci_id: ci.ci_id,
+          judgement: r.judgement || '',
+          value: r.value != null ? r.value : '',
+          text: r.text != null ? r.text : '',
+          pic: pic
+        };
+      });
+
+      if (!SHEET_API_URL) {
+        // Demo mode: just mark clean locally
+        delete state.dirtyProcesses[procKey];
+        alert('Demo mode: saved ' + pid + ' locally (connect Google Sheets to persist).');
+        render();
+        return;
+      }
+
+      state.savingProcess = procKey;
+      render();
+      try {
+        const res = await fetch(SHEET_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'saveResults',
+            inspectionId: inspId,
+            processId: pid,
+            results: results,
+            recordedBy: pic
+          })
+        });
+        const json = await res.json();
+        if (!json.ok) throw new Error(json.error || 'Save failed');
+        // Mark clean; reload fresh data so progress/status reflect the sheet
+        delete state.dirtyProcesses[procKey];
+        state.savingProcess = null;
+        await loadData();
+      } catch (err) {
+        state.savingProcess = null;
+        alert('Could not save ' + pid + ': ' + err);
+        render();
       }
     }
 
