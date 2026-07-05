@@ -51,6 +51,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       min-height: 100vh;
+      overflow-x: hidden;
     }
     button { font-family: inherit; cursor: pointer; }
     input, select { font-family: inherit; font-size: 14px; }
@@ -202,14 +203,14 @@
        FLUID / RESPONSIVE BREAKPOINTS
        ========================================================= */
     /* Narrow phones */
-    @media (max-width: 480px) {
+    @media (max-width: 640px) {
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .form-row { grid-template-columns: 1fr; }
       .plan-header-grid { grid-template-columns: 1fr 1fr; }
       /* Phone: Model | Variance on row 1; Lots | Sides on row 2 */
       .model-row-inline {
-        grid-template-columns: minmax(0, 1fr) 90px;
-        gap: 8px 6px;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 8px;
       }
       .model-row-inline .checkbox-pill {
         padding: 6px 8px;
