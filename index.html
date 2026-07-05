@@ -1102,7 +1102,7 @@
       ],
       controlItems: [
         // P01,
-        { ci_id: 'CI-0001', process_id: 'P01', name: 'HLT Noise Inspection', type: 'TEXT', standard: 'Stamp Date', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0001', process_id: 'P01', name: 'HLT Noise Inspection', type: 'OK_NG', standard: 'Stamp Date', unit: '', model_dependent: false, applicable_models: 'ALL' },
         // P02,
         { ci_id: 'CI-0002', process_id: 'P02', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
         { ci_id: 'CI-0003', process_id: 'P02', name: 'Torque Driver Bit', type: 'OK_NG', standard: 'Not Worn or Torn', unit: '', model_dependent: false, applicable_models: 'ALL' },
@@ -1139,7 +1139,7 @@
         { ci_id: 'CI-0029', process_id: 'P07', name: 'Screw Box Location', type: 'TEXT', standard: 'See ModelSpecs', unit: '', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
         { ci_id: 'CI-0030', process_id: 'P07', name: 'Container Storage', type: 'OK_NG', standard: 'No Foreign Material', unit: '', model_dependent: false, applicable_models: 'ALL' },
         // P08,
-        { ci_id: 'CI-0031', process_id: 'P08', name: 'HLT Noise Inspection', type: 'TEXT', standard: 'Stamp Date', unit: '', model_dependent: false, applicable_models: 'ALL' },
+        { ci_id: 'CI-0031', process_id: 'P08', name: 'HLT Noise Inspection', type: 'OK_NG', standard: 'Stamp Date', unit: '', model_dependent: false, applicable_models: 'ALL' },
         { ci_id: 'CI-0032', process_id: 'P08', name: 'Skin Jig Condition', type: 'OK_NG', standard: 'Not Tear or Dirt', unit: '', model_dependent: false, applicable_models: 'ALL' },
         { ci_id: 'CI-0033', process_id: 'P08', name: 'Torque Driver Bit', type: 'OK_NG', standard: 'Not Worn or Torn', unit: '', model_dependent: false, applicable_models: 'ALL' },
         { ci_id: 'CI-0034', process_id: 'P08', name: 'Torque Driver Reading', type: 'NUMERIC', standard: 'See ModelSpecs', unit: 'Nm', model_dependent: true, applicable_models: 'T20,3M0,3A0,3K6,T00-4DR,T00-5DR' },
@@ -2031,8 +2031,11 @@
     // =========================================================
     // ROUTER + RENDER
     // =========================================================
+    let lastViewKey = '';
     function render() {
       const main = document.getElementById('main');
+      const prevScroll = window.scrollY;   // remember where we are
+
       if (state.currentTab === 'dashboard') {
         main.innerHTML = renderDashboard();
       } else if (state.currentTab === 'fill') {
@@ -2046,7 +2049,16 @@
       document.querySelectorAll('.tab-bar button').forEach(b => {
         b.classList.toggle('active', b.dataset.tab === state.currentTab);
       });
-      window.scrollTo(0, 0);
+
+      // Scroll to top ONLY when the view actually changes (tab switch, open/close
+      // inspection). On same-view re-renders (filling items), keep the position.
+      const viewKey = state.currentTab + '|' + (state.selectedInspectionId || '');
+      if (viewKey !== lastViewKey) {
+        window.scrollTo(0, 0);
+        lastViewKey = viewKey;
+      } else {
+        window.scrollTo(0, prevScroll);
+      }
     }
 
     // =========================================================
