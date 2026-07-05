@@ -206,10 +206,10 @@
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .form-row { grid-template-columns: 1fr; }
       .plan-header-grid { grid-template-columns: 1fr 1fr; }
-      /* Model | Lots | Sides stay on ONE line; Model shrinks to fit */
+      /* Phone: Model | Variance on row 1; Lots | Sides on row 2 */
       .model-row-inline {
-        grid-template-columns: minmax(0, 1fr) 44px auto;
-        gap: 6px;
+        grid-template-columns: minmax(0, 1fr) 90px;
+        gap: 8px 6px;
       }
       .model-row-inline .checkbox-pill {
         padding: 6px 8px;
@@ -838,7 +838,7 @@
     }
     .model-row-inline {
       display: grid;
-      grid-template-columns: 1fr 58px auto;
+      grid-template-columns: 1fr 96px 58px auto;
       gap: 8px;
       align-items: end;
     }
@@ -1291,15 +1291,15 @@
         { user_id: 'USR-011', name: 'Nurul Huda', role: 'QA Inspector' }
       ],
       inspections: [
-        { id: 'INS-2026-0001', date: '2026-06-28', model: 'T20', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0001', date: '2026-06-28', model: 'T20', side: 'RH-L', line: 'L2-DM-A', shift: 'A', variance: 'E',
           leader: 'Ahmad Y.', status: 'Completed', result: 'PASSED', total: 63, done: 63, ng: 0 },
-        { id: 'INS-2026-0002', date: '2026-06-30', model: '3K6', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0002', date: '2026-06-30', model: '3K6', side: 'RH-R', line: 'L2-DM-A', shift: 'A', variance: 'V',
           leader: 'Ahmad Y.', status: 'In Progress', result: '', total: 62, done: 5, ng: 0 },
-        { id: 'INS-2026-0003', date: '2026-06-29', model: 'T00-4DR', side: 'RH-L', line: 'L2-DM-B', shift: 'B',
+        { id: 'INS-2026-0003', date: '2026-06-29', model: 'T00-4DR', side: 'RH-L', line: 'L2-DM-B', shift: 'B', variance: 'RS',
           leader: 'Raj K.', status: 'Failed', result: 'ACTION NEEDED', total: 61, done: 61, ng: 2 },
-        { id: 'INS-2026-0004', date: '2026-06-30', model: '3M0', side: 'RH-L', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0004', date: '2026-06-30', model: '3M0', side: 'RH-L', line: 'L2-DM-A', shift: 'A', variance: 'HEV E',
           leader: 'Ahmad Y.', status: 'Scheduled', result: '', total: 63, done: 0, ng: 0 },
-        { id: 'INS-2026-0005', date: '2026-06-27', model: '3A0', side: 'RH-R', line: 'L2-DM-A', shift: 'A',
+        { id: 'INS-2026-0005', date: '2026-06-27', model: '3A0', side: 'RH-R', line: 'L2-DM-A', shift: 'A', variance: 'V',
           leader: 'Ahmad Y.', status: 'Overdue', result: '', total: 63, done: 0, ng: 0 }
       ],
       // Pre-filled sample results for INS-2026-0002 (in progress) for the demo view
@@ -1333,10 +1333,10 @@
         line: '',
         shift: '',
         customer: '',
-        variance: '',
+        supv: '',
         leader: '',
         models: [
-          { model: '', lots: '', sides: ['RH-L', 'RH-R'] }
+          { model: '', variance: '', lots: '', sides: ['RH-L', 'RH-R'] }
         ]
       }
     };
@@ -1467,6 +1467,27 @@
       `;
     }
 
+    // Per-model Variance dropdown (E, V, RS, HEV E, HEV V, HEV RS)
+    function varianceDropdownRow(idx, current) {
+      const options = ['E', 'V', 'RS', 'HEV E', 'HEV V', 'HEV RS'];
+      const isEmpty = !current;
+      const optionsHtml = options.map(opt => `
+        <div class="dropdown-option ${opt === current ? 'selected' : ''}"
+             data-ddvar-idx="${idx}" data-ddvar-value="${opt}">${opt}</div>
+      `).join('');
+      return `
+        <div class="dropdown">
+          <button type="button" class="dropdown-btn ${isEmpty ? 'is-placeholder' : ''}">
+            <span class="dropdown-label">${isEmpty ? 'select…' : current}</span>
+            <span class="dropdown-arrow">&#9662;</span>
+          </button>
+          <div class="dropdown-menu">
+            ${optionsHtml}
+          </div>
+        </div>
+      `;
+    }
+
     function renderDashboard() {
       const dayInsp = dashboardInspections();          // inspections for the selected date
       const k = kpis(dayInsp);
@@ -1560,8 +1581,8 @@
                 ${customDropdown('customer', ['OEM', 'HPC', 'ATS'], state.planForm.customer)}
               </div>
               <div class="form-field">
-                <label>Variance</label>
-                ${customDropdown('variance', ['E', 'V', 'RS', 'HEV E', 'HEV V', 'HEV RS'], state.planForm.variance)}
+                <label>Duty Supv</label>
+                ${customDropdown('supv', ['Raj', 'Bob Husin'], state.planForm.supv)}
               </div>
             </div>
 
@@ -1577,6 +1598,10 @@
                     <div class="form-field">
                       <label>Model</label>
                       ${customDropdownRow(idx, DB.models.map(mm => mm.model_code), m.model)}
+                    </div>
+                    <div class="form-field">
+                      <label>Variance</label>
+                      ${varianceDropdownRow(idx, m.variance)}
                     </div>
                     <div class="form-field">
                       <label>Lots</label>
@@ -1628,7 +1653,7 @@
                 <div class="insp-id-title">
                   <span class="insp-id">${ins.id}</span>
                   &middot;
-                  <span>${ins.model} ${ins.side}</span>
+                  <span>${ins.model}${ins.variance ? ' ' + ins.variance : ''} ${ins.side}</span>
                 </div>
                 <div class="insp-meta">
                   ${ins.line} &middot; ${ins.done}/${ins.total} items
@@ -1677,7 +1702,7 @@
                 <div class="insp-id-title">
                   <span class="insp-id">${ins.id}</span>
                   &middot;
-                  <span>${ins.model} ${ins.side}</span>
+                  <span>${ins.model}${ins.variance ? ' ' + ins.variance : ''} ${ins.side}</span>
                 </div>
                 <div class="insp-meta">
                   ${ins.line} &middot; ${ins.done}/${ins.total} items
@@ -1839,7 +1864,7 @@
             <div class="insp-header-id">${ins.id}</div>
             <div class="status-pill ${statusClass(ins.status)}">${ins.status}</div>
           </div>
-          <div class="insp-header-title">Door Mirror Job Setup &mdash; ${ins.model} ${ins.side}</div>
+          <div class="insp-header-title">Door Mirror Job Setup &mdash; ${ins.model}${ins.variance ? ' ' + ins.variance : ''} ${ins.side}</div>
           <div class="insp-header-meta">
             <div><div class="label">Date</div><div class="value">${fmtDate(ins.date) || '-'}</div></div>
             <div><div class="label">Line / Shift</div><div class="value">${ins.line} / ${ins.shift}</div></div>
@@ -2014,7 +2039,7 @@
                 <div class="insp-id-title">
                   <span class="insp-id">${ins.id}</span>
                   &middot;
-                  <span>${ins.model} ${ins.side}</span>
+                  <span>${ins.model}${ins.variance ? ' ' + ins.variance : ''} ${ins.side}</span>
                 </div>
                 <div class="insp-meta">
                   ${ins.line} &middot; ${fmtDate(ins.date)}
@@ -2104,6 +2129,19 @@
         const value = ddRowOption.dataset.ddrowValue;
         if (state.planForm.models[idx]) {
           state.planForm.models[idx].model = value;
+          render();
+        }
+        return;
+      }
+
+      // ----- Custom dropdown: pick a variance (model row) -----
+      const ddVarOption = e.target.closest('[data-ddvar-value]');
+      if (ddVarOption) {
+        e.stopPropagation();
+        const idx = parseInt(ddVarOption.dataset.ddvarIdx);
+        const value = ddVarOption.dataset.ddvarValue;
+        if (state.planForm.models[idx]) {
+          state.planForm.models[idx].variance = value;
           render();
         }
         return;
@@ -2254,6 +2292,7 @@
         // New row starts empty so placeholders show
         state.planForm.models.push({
           model: '',
+          variance: '',
           lots: '',
           sides: ['RH-L', 'RH-R']
         });
@@ -2269,18 +2308,18 @@
         if (!f.line) missing.push('Line');
         if (!f.shift) missing.push('Shift');
         if (!f.customer) missing.push('Customer');
-        if (!f.variance) missing.push('Variance');
+        if (!f.supv) missing.push('Duty Supv');
         if (!f.leader) missing.push('Duty Leader');
         if (missing.length > 0) {
           alert('Please fill: ' + missing.join(', '));
           return;
         }
-        const incomplete = f.models.some(m => !m.model || !m.lots || m.sides.length === 0);
+        const incomplete = f.models.some(m => !m.model || !m.variance || !m.lots || m.sides.length === 0);
         if (incomplete) {
-          alert('For each model, pick a Model, enter Lots, and pick at least one side');
+          alert('For each model, pick Model, Variance, Lots, and at least one side');
           return;
         }
-        const validModels = f.models.filter(m => m.model && m.lots && m.sides.length > 0);
+        const validModels = f.models.filter(m => m.model && m.variance && m.lots && m.sides.length > 0);
         if (validModels.length === 0) {
           alert('Add at least one complete model row');
           return;
@@ -2299,6 +2338,7 @@
               DB.inspections.push({
                 id: newId, date: f.date, model: m.model, side: side,
                 line: `${f.line}-DM-${f.shift}`, shift: f.shift,
+                variance: m.variance,
                 leader: f.leader, status: 'Scheduled', result: '',
                 total: 0, done: 0, ng: 0
               });
@@ -2438,7 +2478,7 @@
               <div class="insp-id-title">
                 <span class="insp-id">${ins.id}</span>
                 &middot;
-                <span>${ins.model} ${ins.side}</span>
+                <span>${ins.model}${ins.variance ? ' ' + ins.variance : ''} ${ins.side}</span>
               </div>
               <div class="insp-meta">
                 ${ins.line} &middot; ${fmtDate(ins.date)}
@@ -2707,10 +2747,10 @@
             action: 'addPlan',
             plan: {
               date: f.date, line: f.line, shift: f.shift,
-              customer: f.customer, variance: f.variance, leader: f.leader
+              customer: f.customer, supv: f.supv, leader: f.leader
             },
             models: validModels.map(m => ({
-              model: m.model, lots: m.lots, sides: m.sides
+              model: m.model, variance: m.variance, lots: m.lots, sides: m.sides
             })),
             pcsPerLot: PCS_PER_LOT
           })
@@ -2720,8 +2760,8 @@
 
         // Reset the form for the next entry
         state.planForm = {
-          date: '', line: '', shift: '', customer: '', variance: '', leader: '',
-          models: [{ model: '', lots: '', sides: ['RH-L', 'RH-R'] }]
+          date: '', line: '', shift: '', customer: '', supv: '', leader: '',
+          models: [{ model: '', variance: '', lots: '', sides: ['RH-L', 'RH-R'] }]
         };
         // Jump the dashboard to the plan's date so the new inspections show
         state.dashboardDate = planDate;
