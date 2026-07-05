@@ -1778,10 +1778,23 @@
                     <button class="${judged && result.judgement==='NG' ? 'selected ng' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="NG">NG</button>
                   </div>`;
               } else if (ci.type === 'TEXT') {
-                controls = `
-                  <input type="text" class="item-input wide" placeholder="enter value"
-                    value="${result && result.text != null ? result.text : ''}"
-                    data-text-insp="${inspId}" data-text-ci="${ci.ci_id}" data-proc="${pid}">`;
+                if (ci.model_dependent) {
+                  // Dropdown of standard options (default = model's standard) + OK/NG
+                  const options = getStandardOptions(ci.ci_id);
+                  const current = (result && result.text) ? result.text : standard;
+                  controls = `
+                    ${standardDropdown(inspId, ci.ci_id, pid, options, current)}
+                    <div class="ok-ng-buttons" style="margin-top:6px;">
+                      <button class="${judged && result.judgement==='OK' ? 'selected ok' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="OK">OK</button>
+                      <button class="${judged && result.judgement==='NG' ? 'selected ng' : ''}" data-action="set-judgement" data-insp="${inspId}" data-ci="${ci.ci_id}" data-proc="${pid}" data-val="NG">NG</button>
+                    </div>`;
+                } else {
+                  // Free text (e.g. Stamp Date)
+                  controls = `
+                    <input type="text" class="item-input wide" placeholder="enter value"
+                      value="${result && result.text != null ? result.text : ''}"
+                      data-text-insp="${inspId}" data-text-ci="${ci.ci_id}" data-proc="${pid}">`;
+                }
               } else if (ci.type === 'DETECT') {
                 controls = `
                   <div class="ok-ng-buttons">
@@ -1855,6 +1868,36 @@
         <div class="dropdown">
           <button type="button" class="dropdown-btn ${isEmpty ? 'is-placeholder' : ''}">
             <span class="dropdown-label">${isEmpty ? 'select PIC…' : current}</span>
+            <span class="dropdown-arrow">&#9662;</span>
+          </button>
+          <div class="dropdown-menu">${opts}</div>
+        </div>`;
+    }
+
+    // All distinct standard values available for a control item (across models).
+    // Used to offer a dropdown of choices for model-dependent TEXT items.
+    function getStandardOptions(ciId) {
+      const opts = [];
+      const seen = {};
+      Object.keys(DB.modelSpecs).forEach(key => {
+        if (key.indexOf(ciId + '|') === 0) {
+          const v = DB.modelSpecs[key].value;
+          if (v && !seen[v]) { seen[v] = true; opts.push(v); }
+        }
+      });
+      return opts;
+    }
+
+    // Dropdown of standard values (default = model's standard, editable)
+    function standardDropdown(inspId, ciId, pid, options, current) {
+      const opts = options.map(o => `
+        <div class="dropdown-option ${o === current ? 'selected' : ''}"
+             data-std-insp="${inspId}" data-std-ci="${ciId}" data-std-proc="${pid}" data-std-value="${o}">${o}</div>
+      `).join('');
+      return `
+        <div class="dropdown">
+          <button type="button" class="dropdown-btn">
+            <span class="dropdown-label">${current}</span>
             <span class="dropdown-arrow">&#9662;</span>
           </button>
           <div class="dropdown-menu">${opts}</div>
@@ -2054,6 +2097,23 @@
         return;
       }
 
+      // ----- Custom dropdown: pick a standard value (check-sheet TEXT item) -----
+      const stdOption = e.target.closest('[data-std-value]');
+      if (stdOption) {
+        e.stopPropagation();
+        const inspId = stdOption.dataset.stdInsp;
+        const ciId = stdOption.dataset.stdCi;
+        const pid = stdOption.dataset.stdProc;
+        const value = stdOption.dataset.stdValue;
+        const key = `${inspId}|${ciId}`;
+        const r = DB.results[key] || {};
+        r.text = value;
+        DB.results[key] = r;
+        state.dirtyProcesses[`${inspId}|${pid}`] = true;
+        render();
+        return;
+      }
+
       // ----- Custom dropdown: pick a PIC (process) -----
       const picOption = e.target.closest('[data-pic-value]');
       if (picOption) {
@@ -2123,13 +2183,19 @@
         const val = actionEl.dataset.val;
         const key = `${inspId}|${ciId}`;
         const existing = DB.results[key] || {};
+        // For a model-dependent TEXT item, if no value chosen yet, use the standard
+        let textVal = existing.text != null ? existing.text : '';
+        const ci = DB.controlItems.find(c => c.ci_id === ciId);
+        const ins = getInspection(inspId);
+        if (ci && ci.type === 'TEXT' && ci.model_dependent && !textVal && ins) {
+          textVal = getStandard(ci, ins.model);
+        }
         DB.results[key] = {
           judgement: val,
           value: existing.value != null ? existing.value : '',
-          text: existing.text != null ? existing.text : '',
+          text: textVal,
           pic: state.processPIC[`${inspId}|${pid}`] || ''
         };
-        // Mark this process as having unsaved changes
         state.dirtyProcesses[`${inspId}|${pid}`] = true;
         render();
       } else if (action === 'save-process') {
