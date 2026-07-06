@@ -192,33 +192,25 @@
     /* =========================================================
        KPI CARDS GRID
        ========================================================= */
+    /* Mobile-first: 2 columns by default; 4 on wider screens (min-width rule below) */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: clamp(6px, 1.5vw, 12px);
       margin-bottom: 12px;
     }
 
     /* =========================================================
-       FLUID / RESPONSIVE BREAKPOINTS
+       RESPONSIVE — MOBILE-FIRST
+       Base styles above = phone. These add wider-screen layouts.
+       Using min-width (not max-width) is robust against mobile
+       viewport quirks — if a query fails to fire, we safely keep
+       the mobile layout instead of overflowing.
        ========================================================= */
-    /* Narrow phones */
-    @media (max-width: 640px) {
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-      .form-row { grid-template-columns: 1fr; }
-      .plan-header-grid { grid-template-columns: 1fr 1fr; }
-      /* Phone: Model | Variance on row 1; Lots | Sides on row 2 */
-      .model-row-inline {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px 8px;
-      }
-      .model-row-inline .checkbox-pill {
-        padding: 6px 8px;
-        font-size: 11px;
-      }
-      .model-row { padding: 12px 32px 12px 12px; }
-      .insp-header-meta { grid-template-columns: repeat(2, 1fr); row-gap: 10px; }
-    }
+    /* Phone extras (always apply on small screens as the default) */
+    .model-row-inline .checkbox-pill { padding: 6px 8px; font-size: 11px; }
+    .model-row { padding: 12px 32px 12px 12px; }
+
     /* Tablets and up: two-column layout for check item cards */
     @media (min-width: 720px) {
       .check-items-grid {
@@ -325,11 +317,11 @@
        FORM ELEMENTS
        ========================================================= */
     .form-grid { display: grid; gap: 10px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    /* 3-column header grid for the production plan (Date/Shift/Supv | Line/Cust/Leader) */
+    .form-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    /* Mobile-first: 2 columns by default; 3 columns on wider screens (min-width rule below) */
     .plan-header-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
     /* Plan header field labels: darker, matching the 'Models' sublabel weight */
@@ -657,7 +649,7 @@
     }
     .insp-header-meta {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 10px 8px;
       font-size: 11px;
     }
@@ -838,10 +830,11 @@
       margin-bottom: 8px;
       position: relative;
     }
+    /* Mobile-first: 2 columns by default; 4 columns on wider screens (min-width rule below) */
     .model-row-inline {
       display: grid;
-      grid-template-columns: 1fr 96px 58px auto;
-      gap: 8px;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 8px;
       align-items: end;
     }
     /* Make Model dropdown, Lots input, and Sides all the same height (42px) */
@@ -1022,6 +1015,19 @@
       color: var(--text-muted);
       text-align: center;
       padding: 12px 0;
+    }
+
+    /* =========================================================
+       DESKTOP OVERRIDES — placed LAST so they win over the
+       mobile-first base rules when the screen is wide enough.
+       ========================================================= */
+    @media (min-width: 700px) {
+      .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+      .form-row { grid-template-columns: 1fr 1fr; }
+      .plan-header-grid { grid-template-columns: repeat(3, 1fr); }
+      .model-row-inline { grid-template-columns: 1fr 96px 58px auto; gap: 8px; }
+      .model-row-inline .checkbox-pill { padding: 6px 10px; font-size: 12px; }
+      .insp-header-meta { grid-template-columns: repeat(3, 1fr); }
     }
   </style>
 </head>
